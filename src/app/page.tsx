@@ -79,7 +79,7 @@ export default function Home() {
   const [deletingKey, setDeletingKey] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<{ chatId: string; fecha: string } | null>(null);
   const [collapsedDates, setCollapsedDates] = useState<Set<string>>(new Set());
-  const chatEndRef = useRef<HTMLDivElement>(null);
+  const chatTopRef = useRef<HTMLDivElement>(null);
 
   const toggleDate = (fecha: string) =>
     setCollapsedDates((prev) => {
@@ -126,7 +126,7 @@ export default function Home() {
 
   useEffect(() => {
     if (!loadingChat) {
-      chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+      chatTopRef.current?.scrollIntoView({ behavior: "instant" });
     }
   }, [messages, loadingChat]);
 
@@ -351,6 +351,7 @@ export default function Home() {
               {/* Messages */}
               <div className="flex-1 overflow-y-auto py-4 md:py-6">
                 <div className="max-w-4xl mx-auto px-3 md:px-6 space-y-3">
+                  <div ref={chatTopRef} />
                   {loadingChat ? (
                     <div className="flex items-center justify-center py-20 text-zinc-400 text-sm">
                       Cargando mensajes…
@@ -427,7 +428,7 @@ export default function Home() {
                       );
                     })
                   )}
-                  <div ref={chatEndRef} />
+                  <div ref={undefined} />
                 </div>
               </div>
             </>
