@@ -1,65 +1,408 @@
-import Image from "next/image";
+"use client";
+
+import { useEffect, useState, useCallback, useRef, useMemo } from "react";
+import DOMPurify from "dompurify";
+
+const API_BASE = "/api/proxy";
+
+type ContentBlock = { type: string; text?: string; [key: string]: unknown };
+
+type Message = {
+  role: string;
+  content: string | ContentBlock | ContentBlock[];
+  created_at?: string;
+  [key: string]: unknown;
+};
+
+function extractText(content: Message["content"]): string {
+  if (typeof content === "string") return content;
+  if (Array.isArray(content)) {
+    return content
+      .map((b) => (typeof b.text === "string" ? b.text : ""))
+      .join("");
+  }
+  if (typeof content === "object" && content !== null) {
+    return typeof content.text === "string" ? content.text : JSON.stringify(content);
+  }
+  return "";
+}
+
+function looksLikeHtml(text: string): boolean {
+  return /<[a-z][\s\S]*>/i.test(text);
+}
+
+type UserEntry = { chat_id: string; fechas: string[] };
+
+type UsersResponse = {
+  success: boolean;
+  total: number;
+  user_ids: UserEntry[];
+};
+
+type UserChatResponse = {
+  success: boolean;
+  chat_id: number;
+  total: number;
+  messages: Message[];
+};
+
+function roleLabel(role: string): string {
+  if (role === "human" || role === "user") return "Usuario";
+  if (role === "ai" || role === "assistant") return "Dr. Recetas";
+  return role;
+}
+
+function roleIsUser(role: string): boolean {
+  return role === "human" || role === "user";
+}
+
+function formatDate(dateStr: string): string {
+  const [year, month, day] = dateStr.split("-").map(Number);
+  return new Date(year, month - 1, day).toLocaleDateString("es-MX", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+  });
+}
 
 export default function Home() {
+  const [userIds, setUserIds] = useState<UserEntry[]>([]);
+  const [selectedUser, setSelectedUser] = useState<string | null>(null);
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [loadingUsers, setLoadingUsers] = useState(true);
+  const [loadingChat, setLoadingChat] = useState(false);
+  const [errorUsers, setErrorUsers] = useState<string | null>(null);
+  const [errorChat, setErrorChat] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [totalMessages, setTotalMessages] = useState(0);
+  const [showSidebar, setShowSidebar] = useState(true);
+  const [deletingKey, setDeletingKey] = useState<string | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState<{ chatId: string; fecha: string } | null>(null);
+  const chatEndRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    fetch(`${API_BASE}/chat/users`)
+      .then((r) => r.json())
+      .then((data: UsersResponse) => {
+        if (data.success) setUserIds(data.user_ids);
+        else setErrorUsers("Error al cargar usuarios");
+      })
+      .catch(() => setErrorUsers("No se pudo conectar con la API"))
+      .finally(() => setLoadingUsers(false));
+  }, []);
+
+  const loadChat = useCallback((userId: string) => {
+    setSelectedUser(userId);
+    setShowSidebar(false);
+    setMessages([]);
+    setTotalMessages(0);
+    setLoadingChat(true);
+    setErrorChat(null);
+    fetch(`${API_BASE}/chat/user/${userId}`)
+      .then((r) => r.json())
+      .then((data: UserChatResponse) => {
+        if (data.success) {
+          setMessages(data.messages);
+          setTotalMessages(data.total);
+        } else {
+          setErrorChat("Error al cargar mensajes");
+        }
+      })
+      .catch(() => setErrorChat("No se pudo cargar el chat"))
+      .finally(() => setLoadingChat(false));
+  }, []);
+
+  useEffect(() => {
+    if (!loadingChat) {
+      chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [messages, loadingChat]);
+
+  const deleteChat = useCallback(async (chatId: string, fecha: string) => {
+    const key = `${chatId}|${fecha}`;
+    setDeletingKey(key);
+    setConfirmDelete(null);
+    try {
+      const res = await fetch(`${API_BASE}/chat/user/${chatId}/fecha/${fecha}`, { method: "DELETE" });
+      const data = await res.json();
+      if (data.success) {
+        setUserIds((prev) =>
+          prev
+            .map((u) =>
+              u.chat_id === chatId
+                ? { ...u, fechas: u.fechas.filter((f) => f !== fecha) }
+                : u
+            )
+            .filter((u) => u.fechas.length > 0)
+        );
+        if (selectedUser === chatId) {
+          setSelectedUser(null);
+          setMessages([]);
+          setShowSidebar(true);
+        }
+      }
+    } finally {
+      setDeletingKey(null);
+    }
+  }, [selectedUser]);
+
+  const groupedByDate = useMemo(() => {
+    const filtered = userIds.filter((u) =>
+      u.chat_id.includes(searchQuery.trim())
+    );
+    const map: Record<string, UserEntry[]> = {};
+    for (const user of filtered) {
+      for (const fecha of user.fechas) {
+        if (!map[fecha]) map[fecha] = [];
+        map[fecha].push(user);
+      }
+    }
+    return Object.entries(map).sort(([a], [b]) => b.localeCompare(a));
+  }, [userIds, searchQuery]);
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
+    <div className="flex flex-col h-screen bg-zinc-100">
+      {/* Header */}
+      <header className="flex items-center gap-3 px-4 md:px-6 py-4 bg-white border-b border-zinc-200 shrink-0 shadow-sm">
+        {/* Mobile back button */}
+        {selectedUser !== null && !showSidebar && (
+          <button
+            onClick={() => setShowSidebar(true)}
+            className="flex items-center justify-center w-8 h-8 rounded-full hover:bg-zinc-100 text-zinc-500 md:hidden shrink-0"
+            aria-label="Volver"
+          >
+            &#8592;
+          </button>
+        )}
+        <div className="flex items-center justify-center w-9 h-9 rounded-full bg-emerald-500 text-white font-bold text-sm shrink-0">
+          DR
+        </div>
+        <div className="min-w-0">
+          <h1 className="text-base font-semibold text-zinc-900 leading-tight truncate">
+            Dr. Recetas Bot
           </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+          <p className="text-xs text-zinc-500">Panel de conversaciones</p>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
+        <div className="ml-auto shrink-0">
+          {!loadingUsers && (
+            <span className="text-xs text-zinc-500 bg-zinc-100 px-3 py-1 rounded-full border border-zinc-200">
+              {userIds.length} usuarios
+            </span>
+          )}
+        </div>
+      </header>
+
+      {/* Body */}
+      <div className="flex flex-1 overflow-hidden">
+        {/* Sidebar — Users List: always visible on md+, toggled on mobile */}
+        <aside
+          className={`flex flex-col shrink-0 bg-white border-r border-zinc-200 ${
+            showSidebar ? "flex" : "hidden"
+          } md:flex w-full md:w-72`}
+        >
+          <div className="p-3 border-b border-zinc-100">
+            <input
+              type="text"
+              placeholder="Buscar usuario…"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full px-3 py-2 text-sm rounded-lg bg-zinc-100 text-zinc-900 placeholder-zinc-400 outline-none focus:ring-2 focus:ring-emerald-400 border border-zinc-200"
             />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
+          </div>
+
+          <div className="flex-1 overflow-y-auto">
+            {loadingUsers ? (
+              <div className="flex items-center justify-center py-16 text-zinc-400 text-sm">
+                Cargando usuarios…
+              </div>
+            ) : errorUsers ? (
+              <div className="flex flex-col items-center justify-center py-16 gap-2 px-4 text-center">
+                <span className="text-zinc-400 text-sm">{errorUsers}</span>
+                <button
+                  onClick={() => window.location.reload()}
+                  className="text-xs text-emerald-600 hover:underline"
+                >
+                  Reintentar
+                </button>
+              </div>
+            ) : groupedByDate.length === 0 ? (
+              <div className="flex items-center justify-center py-16 text-zinc-400 text-sm">
+                Sin resultados
+              </div>
+            ) : (
+              groupedByDate.map(([fecha, users]) => (
+                <div key={fecha}>
+                  <div className="px-4 py-2 text-xs font-semibold text-zinc-500 capitalize bg-zinc-50 border-b border-zinc-100 sticky top-0">
+                    {formatDate(fecha)}
+                  </div>
+                  {users.map((user) => (
+                    <div
+                      key={user.chat_id}
+                      className={`flex items-center w-full border-l-2 transition-colors text-sm group ${
+                        selectedUser === user.chat_id
+                          ? "bg-emerald-50 border-emerald-500"
+                          : "border-transparent hover:bg-zinc-50"
+                      }`}
+                    >
+                      <button
+                        onClick={() => loadChat(user.chat_id)}
+                        className={`flex items-center gap-3 flex-1 min-w-0 px-4 py-3 text-left ${
+                          selectedUser === user.chat_id
+                            ? "text-emerald-700 font-medium"
+                            : "text-zinc-700"
+                        }`}
+                      >
+                        <div className="flex items-center justify-center w-7 h-7 rounded-full bg-zinc-100 border border-zinc-200 text-zinc-600 text-xs font-semibold shrink-0">
+                          {user.chat_id.slice(-2)}
+                        </div>
+                        <span className="truncate">Chat {user.chat_id}</span>
+                      </button>
+                      {confirmDelete?.chatId === user.chat_id && confirmDelete?.fecha === fecha ? (
+                        <div className="flex items-center gap-1 pr-2 shrink-0">
+                          <button
+                            onClick={() => deleteChat(user.chat_id, fecha)}
+                            disabled={deletingKey === `${user.chat_id}|${fecha}`}
+                            className="text-xs px-2 py-1 rounded bg-red-500 text-white hover:bg-red-600 disabled:opacity-50"
+                          >
+                            {deletingKey === `${user.chat_id}|${fecha}` ? "…" : "Sí"}
+                          </button>
+                          <button
+                            onClick={() => setConfirmDelete(null)}
+                            className="text-xs px-2 py-1 rounded bg-zinc-200 text-zinc-700 hover:bg-zinc-300"
+                          >
+                            No
+                          </button>
+                        </div>
+                      ) : (
+                        <button
+                          onClick={() => setConfirmDelete({ chatId: user.chat_id, fecha })}
+                          className="opacity-0 group-hover:opacity-100 mr-2 p-1.5 rounded hover:bg-red-50 text-zinc-400 hover:text-red-500 transition-opacity shrink-0"
+                          aria-label="Eliminar"
+                          title={`Eliminar mensajes del ${fecha}`}
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" viewBox="0 0 20 20" fill="currentColor">
+                            <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
+                          </svg>
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              ))
+            )}
+          </div>
+        </aside>
+
+        {/* Main — Chat View: hidden on mobile when sidebar is showing */}
+        <main
+          className={`flex-col flex-1 overflow-hidden bg-zinc-50 ${
+            showSidebar ? "hidden md:flex" : "flex"
+          }`}
+        >
+          {selectedUser === null ? (
+            <div className="flex flex-col items-center justify-center flex-1 text-zinc-400 gap-3">
+              <div className="flex items-center justify-center w-16 h-16 rounded-full bg-white border border-zinc-200 text-3xl shadow-sm">
+                💬
+              </div>
+              <p className="text-sm">Selecciona un usuario para ver su conversación</p>
+            </div>
+          ) : (
+            <>
+              {/* Chat header */}
+              <div className="flex items-center gap-3 px-4 md:px-6 py-3 bg-white border-b border-zinc-200 shrink-0">
+                <div className="flex items-center justify-center w-8 h-8 rounded-full bg-emerald-100 text-emerald-700 text-xs font-bold shrink-0">
+                  {String(selectedUser).slice(-2)}
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-zinc-900">
+                    Usuario {selectedUser}
+                  </p>
+                  {!loadingChat && (
+                    <p className="text-xs text-zinc-500">
+                      {totalMessages} mensaje{totalMessages !== 1 ? "s" : ""}
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              {/* Messages */}
+              <div className="flex-1 overflow-y-auto py-4 md:py-6">
+                <div className="max-w-4xl mx-auto px-3 md:px-6 space-y-3">
+                  {loadingChat ? (
+                    <div className="flex items-center justify-center py-20 text-zinc-400 text-sm">
+                      Cargando mensajes…
+                    </div>
+                  ) : errorChat ? (
+                    <div className="flex flex-col items-center justify-center py-20 gap-2 text-center">
+                      <span className="text-zinc-400 text-sm">{errorChat}</span>
+                      <button
+                        onClick={() => loadChat(selectedUser)}
+                        className="text-xs text-emerald-600 hover:underline"
+                      >
+                        Reintentar
+                      </button>
+                    </div>
+                  ) : messages.length === 0 ? (
+                    <div className="flex items-center justify-center py-20 text-zinc-400 text-sm">
+                      Sin mensajes
+                    </div>
+                  ) : (
+                    messages.map((msg, i) => {
+                      const isUser = roleIsUser(msg.role);
+                      const text = extractText(msg.content).trim();
+                      if (!text) return null;
+                      const isHtml = !isUser && looksLikeHtml(text);
+                      return (
+                        <div
+                          key={i}
+                          className={`flex ${isUser ? "justify-end" : "justify-start"}`}
+                        >
+                          <div
+                            className={`max-w-[85%] md:max-w-[75%] flex flex-col gap-1 ${
+                              isUser ? "items-end" : "items-start"
+                            }`}
+                          >
+                            <span className="text-xs text-zinc-400 px-1">
+                              {roleLabel(msg.role)}
+                            </span>
+                            {isHtml ? (
+                              <div
+                                className="chat-html px-4 py-3 rounded-2xl rounded-bl-sm text-sm leading-relaxed bg-white border border-zinc-200 text-zinc-800 shadow-sm"
+                                dangerouslySetInnerHTML={{
+                                  __html: DOMPurify.sanitize(text),
+                                }}
+                              />
+                            ) : (
+                              <div
+                                className={`px-4 py-2.5 rounded-2xl text-sm leading-relaxed whitespace-pre-wrap wrap-break-word ${
+                                  isUser
+                                    ? "bg-emerald-500 text-white rounded-br-sm"
+                                    : "bg-white border border-zinc-200 text-zinc-800 rounded-bl-sm shadow-sm"
+                                }`}
+                              >
+                                {text}
+                              </div>
+                            )}
+                            {msg.created_at && (
+                              <span className="text-xs text-zinc-400 px-1">
+                                {new Date(msg.created_at).toLocaleString("es-MX", {
+                                  dateStyle: "short",
+                                  timeStyle: "short",
+                                })}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })
+                  )}
+                  <div ref={chatEndRef} />
+                </div>
+              </div>
+            </>
+          )}
+        </main>
+      </div>
     </div>
   );
 }
