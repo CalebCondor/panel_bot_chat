@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback, useRef, useMemo } from "react";
 import DOMPurify from "dompurify";
+import { marked } from "marked";
 
 const API_BASE = "/api/proxy";
 
@@ -27,9 +28,6 @@ function extractText(content: Message["content"]): string {
   return "";
 }
 
-function looksLikeHtml(text: string): boolean {
-  return /<[a-z][\s\S]*>/i.test(text);
-}
 
 type UserEntry = { chat_id: string; fechas: string[] };
 
@@ -375,7 +373,9 @@ export default function Home() {
                       const isUser = roleIsUser(msg.role);
                       const text = extractText(msg.content).trim();
                       if (!text) return null;
-                      const isHtml = !isUser && looksLikeHtml(text);
+                      const botHtml = !isUser
+                        ? DOMPurify.sanitize(marked.parse(text) as string)
+                        : null;
                       return (
                         <div
                           key={i}
@@ -389,7 +389,7 @@ export default function Home() {
                             <span className="text-xs text-zinc-400 px-1">
                               {roleLabel(msg.role)}
                             </span>
-                            {isHtml ? (
+                            {botHtml ? (
                               <div
                                 className="prose prose-sm prose-zinc max-w-none px-4 py-3 rounded-2xl rounded-bl-sm bg-white border border-zinc-200 shadow-sm
                                   prose-p:text-zinc-700 prose-p:leading-relaxed prose-p:my-1.5
@@ -400,9 +400,7 @@ export default function Home() {
                                   prose-code:text-emerald-700 prose-code:bg-emerald-50 prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-code:text-xs prose-code:font-medium prose-code:before:content-none prose-code:after:content-none
                                   prose-pre:bg-zinc-900 prose-pre:text-zinc-100 prose-pre:rounded-xl prose-pre:text-xs
                                   prose-blockquote:border-l-4 prose-blockquote:border-emerald-400 prose-blockquote:text-zinc-500 prose-blockquote:not-italic"
-                                dangerouslySetInnerHTML={{
-                                  __html: DOMPurify.sanitize(text),
-                                }}
+                                dangerouslySetInnerHTML={{ __html: botHtml }}
                               />
                             ) : (
                               <div
