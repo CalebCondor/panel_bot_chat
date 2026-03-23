@@ -78,7 +78,19 @@ export default function Home() {
   const [showSidebar, setShowSidebar] = useState(true);
   const [deletingKey, setDeletingKey] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<{ chatId: string; fecha: string } | null>(null);
+  const [collapsedDates, setCollapsedDates] = useState<Set<string>>(new Set());
   const chatEndRef = useRef<HTMLDivElement>(null);
+
+  const toggleDate = (fecha: string) =>
+    setCollapsedDates((prev) => {
+      const next = new Set(prev);
+      if (next.has(fecha)) {
+        next.delete(fecha);
+      } else {
+        next.add(fecha);
+      }
+      return next;
+    });
 
   useEffect(() => {
     fetch(`${API_BASE}/chat/users`)
@@ -230,12 +242,22 @@ export default function Home() {
                 Sin resultados
               </div>
             ) : (
-              groupedByDate.map(([fecha, users]) => (
+              groupedByDate.map(([fecha, users]) => {
+                const isCollapsed = collapsedDates.has(fecha);
+                return (
                 <div key={fecha}>
-                  <div className="px-4 py-2 text-xs font-semibold text-zinc-500 capitalize bg-zinc-50 border-b border-zinc-100 sticky top-0">
-                    {formatDate(fecha)}
-                  </div>
-                  {users.map((user) => (
+                  <button
+                    onClick={() => toggleDate(fecha)}
+                    className="flex items-center justify-between w-full px-4 py-2 text-xs font-semibold text-zinc-500 capitalize bg-zinc-50 border-b border-zinc-100 sticky top-0 hover:bg-zinc-100 transition-colors"
+                  >
+                    <span>{formatDate(fecha)}</span>
+                    <span className={`transition-transform duration-200 ${isCollapsed ? "" : "rotate-180"}`}>
+                      <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+                      </svg>
+                    </span>
+                  </button>
+                  {!isCollapsed && users.map((user, idx) => (
                     <div
                       key={user.chat_id}
                       className={`flex items-center w-full border-l-2 transition-colors text-sm group ${
@@ -253,9 +275,9 @@ export default function Home() {
                         }`}
                       >
                         <div className="flex items-center justify-center w-7 h-7 rounded-full bg-zinc-100 border border-zinc-200 text-zinc-600 text-xs font-semibold shrink-0">
-                          {user.chat_id.slice(-2)}
+                          {idx + 1}
                         </div>
-                        <span className="truncate">Chat {user.chat_id}</span>
+                        <span className="truncate">Conversación {idx + 1}</span>
                       </button>
                       {confirmDelete?.chatId === user.chat_id && confirmDelete?.fecha === fecha ? (
                         <div className="flex items-center gap-1 pr-2 shrink-0">
@@ -288,7 +310,8 @@ export default function Home() {
                     </div>
                   ))}
                 </div>
-              ))
+                );
+              })
             )}
           </div>
         </aside>
@@ -367,7 +390,15 @@ export default function Home() {
                             </span>
                             {isHtml ? (
                               <div
-                                className="chat-html px-4 py-3 rounded-2xl rounded-bl-sm text-sm leading-relaxed bg-white border border-zinc-200 text-zinc-800 shadow-sm"
+                                className="prose prose-sm prose-zinc max-w-none px-4 py-3 rounded-2xl rounded-bl-sm bg-white border border-zinc-200 shadow-sm
+                                  prose-p:text-zinc-700 prose-p:leading-relaxed prose-p:my-1.5
+                                  prose-headings:font-semibold prose-headings:text-zinc-800
+                                  prose-strong:text-zinc-800 prose-strong:font-semibold
+                                  prose-a:text-emerald-600 prose-a:no-underline hover:prose-a:underline prose-a:font-medium
+                                  prose-ul:my-2 prose-ol:my-2 prose-li:my-0.5
+                                  prose-code:text-emerald-700 prose-code:bg-emerald-50 prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-code:text-xs prose-code:font-medium prose-code:before:content-none prose-code:after:content-none
+                                  prose-pre:bg-zinc-900 prose-pre:text-zinc-100 prose-pre:rounded-xl prose-pre:text-xs
+                                  prose-blockquote:border-l-4 prose-blockquote:border-emerald-400 prose-blockquote:text-zinc-500 prose-blockquote:not-italic"
                                 dangerouslySetInnerHTML={{
                                   __html: DOMPurify.sanitize(text),
                                 }}
