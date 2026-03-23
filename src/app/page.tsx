@@ -170,6 +170,14 @@ export default function Home() {
     return Object.entries(map).sort(([a], [b]) => b.localeCompare(a));
   }, [userIds, searchQuery]);
 
+  const initializedCollapse = useRef(false);
+  useEffect(() => {
+    if (!initializedCollapse.current && groupedByDate.length > 1) {
+      initializedCollapse.current = true;
+      setCollapsedDates(new Set(groupedByDate.slice(1).map(([fecha]) => fecha)));
+    }
+  }, [groupedByDate]);
+
   return (
     <div className="flex flex-col h-screen bg-zinc-100">
       {/* Header */}
