@@ -77,6 +77,7 @@ export default function Home() {
   const [deletingKey, setDeletingKey] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<{ chatId: string; fecha: string } | null>(null);
   const [collapsedDates, setCollapsedDates] = useState<Set<string>>(new Set());
+  const [showSummary, setShowSummary] = useState(false);
   const chatTopRef = useRef<HTMLDivElement>(null);
 
   const toggleDate = (fecha: string) =>
@@ -171,6 +172,30 @@ export default function Home() {
   }, [userIds, searchQuery]);
 
   const initializedCollapse = useRef(false);
+
+  function buildSummary(): string {
+    const userMsgs = messages.filter((m) => roleIsUser(m.role));
+    const botMsgs = messages.filter((m) => !roleIsUser(m.role));
+    const dates = messages
+      .filter((m) => m.created_at)
+      .map((m) => new Date(m.created_at as string));
+    const first = dates.length ? dates[0].toLocaleString("es-MX", { dateStyle: "short", timeStyle: "short" }) : null;
+    const last = dates.length > 1 ? dates[dates.length - 1].toLocaleString("es-MX", { dateStyle: "short", timeStyle: "short" }) : null;
+    const lines: string[] = [
+      `📋 Resumen de conversación`,
+      `Chat ID: ${selectedUser}`,
+      first ? `Inicio: ${first}` : "",
+      last ? `Fin: ${last}` : "",
+      `Mensajes del usuario: ${userMsgs.length}`,
+      `Respuestas del bot: ${botMsgs.length}`,
+      "",
+      "─── Turnos ───",
+      ...messages
+        .filter((m) => extractText(m.content).trim())
+        .map((m, i) => `${i + 1}. [${roleLabel(m.role)}] ${extractText(m.content).trim().slice(0, 150)}`),
+    ];
+    return lines.filter((l) => l !== undefined && !(lines.indexOf(l) > 0 && l === "")).join("\n");
+  }
   useEffect(() => {
     if (!initializedCollapse.current && groupedByDate.length > 1) {
       initializedCollapse.current = true;
@@ -352,6 +377,17 @@ export default function Home() {
                     </p>
                   )}
                 </div>
+                {!loadingChat && messages.length > 0 && (
+                  <button
+                    onClick={() => setShowSummary(true)}
+                    className="ml-auto flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-lg hover:bg-emerald-100 transition-colors shrink-0"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clipRule="evenodd" />
+                    </svg>
+                    Resumen
+                  </button>
+                )}
               </div>
 
               {/* Messages */}
@@ -441,6 +477,113 @@ export default function Home() {
           )}
         </main>
       </div>
+
+      {/* Summary Modal */}
+      {showSummary && (() => {
+        const visibleMsgs = messages.filter((m) => extractText(m.content).trim());
+        const userCount = visibleMsgs.filter((m) => roleIsUser(m.role)).length;
+        const botCount = visibleMsgs.filter((m) => !roleIsUser(m.role)).length;
+        const dates = visibleMsgs.filter((m) => m.created_at).map((m) => new Date(m.created_at as string));
+        const first = dates.length ? dates[0] : null;
+        const last = dates.length > 1 ? dates[dates.length - 1] : null;
+        return (
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4"
+            onClick={() => setShowSummary(false)}
+          >
+            <div
+              className="bg-white rounded-2xl shadow-2xl w-full max-w-xl max-h-[85vh] flex flex-col"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Modal header */}
+              <div className="flex items-center justify-between px-5 py-4 border-b border-zinc-100">
+                <div>
+                  <h2 className="text-sm font-semibold text-zinc-900">Diagrama de conversación</h2>
+                  <p className="text-xs text-zinc-400 mt-0.5">Chat {selectedUser}</p>
+                </div>
+                <button
+                  onClick={() => setShowSummary(false)}
+                  className="p-1.5 rounded-lg hover:bg-zinc-100 text-zinc-400 hover:text-zinc-600 transition-colors"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                  </svg>
+                </button>
+              </div>
+
+              {/* Stats bar */}
+              <div className="flex items-center gap-4 px-5 py-3 bg-zinc-50 border-b border-zinc-100 text-xs text-zinc-500">
+                <span className="flex items-center gap-1">
+                  <span className="w-2 h-2 rounded-full bg-emerald-400 inline-block" />
+                  {userCount} del usuario
+                </span>
+                <span className="flex items-center gap-1">
+                  <span className="w-2 h-2 rounded-full bg-blue-400 inline-block" />
+                  {botCount} del bot
+                </span>
+                {first && <span>{first.toLocaleString("es-MX", { dateStyle: "short", timeStyle: "short" })}{last ? ` → ${last.toLocaleString("es-MX", { dateStyle: "short", timeStyle: "short" })}` : ""}</span>}
+              </div>
+
+              {/* Timeline */}
+              <div className="flex-1 overflow-y-auto px-5 py-4">
+                <div className="relative">
+                  {/* Center axis line */}
+                  <div className="absolute left-1/2 top-0 bottom-0 w-px bg-zinc-200 -translate-x-1/2" />
+
+                  <div className="flex flex-col gap-3">
+                    {visibleMsgs.map((msg, i) => {
+                      const isUser = roleIsUser(msg.role);
+                      const text = extractText(msg.content).trim();
+                      const snippet = text.length > 120 ? text.slice(0, 120) + "…" : text;
+                      const time = msg.created_at
+                        ? new Date(msg.created_at as string).toLocaleTimeString("es-MX", { hour: "2-digit", minute: "2-digit" })
+                        : null;
+                      return (
+                        <div key={i} className={`flex items-start gap-3 relative ${ isUser ? "flex-row-reverse" : "flex-row" }`}>
+                          {/* Spacer to push to side */}
+                          <div className="flex-1" />
+                          {/* Node */}
+                          <div className={`relative z-10 w-3 h-3 mt-1.5 rounded-full border-2 shrink-0 ${
+                            isUser ? "bg-emerald-400 border-emerald-500" : "bg-blue-400 border-blue-500"
+                          }`} />
+                          {/* Card */}
+                          <div className={`flex-1 max-w-[42%] rounded-xl border px-3 py-2 shadow-sm ${
+                            isUser
+                              ? "bg-emerald-50 border-emerald-200"
+                              : "bg-blue-50 border-blue-200"
+                          }`}>
+                            <div className="flex items-center justify-between mb-1 gap-2">
+                              <span className={`text-[10px] font-semibold tracking-wide uppercase ${
+                                isUser ? "text-emerald-600" : "text-blue-600"
+                              }`}>{roleLabel(msg.role)}</span>
+                              {time && <span className="text-[10px] text-zinc-400 shrink-0">{time}</span>}
+                            </div>
+                            <p className="text-xs text-zinc-700 leading-relaxed">{snippet}</p>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+
+              {/* Footer */}
+              <div className="px-5 py-3 border-t border-zinc-100 flex justify-end">
+                <button
+                  onClick={() => navigator.clipboard.writeText(buildSummary())}
+                  className="flex items-center gap-1.5 px-4 py-2 text-xs font-medium text-white bg-emerald-500 rounded-lg hover:bg-emerald-600 transition-colors"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" viewBox="0 0 20 20" fill="currentColor">
+                    <path d="M8 3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z" />
+                    <path d="M6 3a2 2 0 00-2 2v11a2 2 0 002 2h8a2 2 0 002-2V5a2 2 0 00-2-2 3 3 0 01-3 3H9a3 3 0 01-3-3z" />
+                  </svg>
+                  Copiar resumen
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 }
