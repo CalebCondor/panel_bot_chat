@@ -331,7 +331,7 @@ export default function Home() {
                 placeholder="Buscar usuario…"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full px-3 py-2 text-sm rounded-lg bg-zinc-100 text-zinc-900 placeholder-zinc-400 outline-none focus:ring-2 focus:ring-emerald-400 border border-zinc-200"
+                className="w-full px-3 py-2 text-base md:text-sm rounded-lg bg-zinc-100 text-zinc-900 placeholder-zinc-400 outline-none focus:ring-2 focus:ring-emerald-400 border border-zinc-200"
               />
             </div>
 
@@ -679,7 +679,7 @@ export default function Home() {
                 }}
                 disabled={simIsLoading}
                 placeholder="Escribe un mensaje..."
-                className="flex-1 max-h-32 min-h-[44px] resize-none overflow-y-auto rounded-xl border border-zinc-300 bg-white px-4 py-2.5 text-sm text-zinc-900 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 outline-none disabled:bg-zinc-50 disabled:text-zinc-400"
+                className="flex-1 max-h-32 min-h-[44px] resize-none overflow-y-auto rounded-xl border border-zinc-300 bg-white px-4 py-2.5 text-base md:text-sm text-zinc-900 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 outline-none disabled:bg-zinc-50 disabled:text-zinc-400"
                 rows={1}
               />
               <button
@@ -775,7 +775,7 @@ export default function Home() {
                       onChange={e => setNewPregunta(e.target.value)}
                       required
                       rows={2}
-                      className="w-full rounded-xl border border-zinc-300 px-4 py-3 text-sm text-zinc-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none resize-none"
+                      className="w-full rounded-xl border border-zinc-300 px-4 py-3 text-base md:text-sm text-zinc-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none resize-none"
                       placeholder="Ej. ¿De dónde debo obtener los productos disponibles...?"
                     />
                   </div>
@@ -788,7 +788,7 @@ export default function Home() {
                       onChange={e => setNewRespuesta(e.target.value)}
                       required
                       rows={5}
-                      className="w-full rounded-xl border border-zinc-300 px-4 py-3 text-sm text-zinc-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none resize-none"
+                      className="w-full rounded-xl border border-zinc-300 px-4 py-3 text-base md:text-sm text-zinc-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none resize-none"
                       placeholder="Ej. SIEMPRE debo consultar los productos reales disponibles..."
                     />
                   </div>
