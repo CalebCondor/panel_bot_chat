@@ -7,6 +7,7 @@ import { marked } from "marked";
 const API_BASE = "/api/proxy";
 
 type ContentBlock = { type: string; text?: string;[key: string]: unknown };
+type KnowledgeEntry = { id: number; pregunta: string; respuesta: string; };
 
 type Message = {
   role: string;
@@ -84,6 +85,60 @@ export default function Home() {
     { role: "bot", text: "¡Hola! Soy el simulador de Dr. Recetas. ¿En qué te puedo ayudar hoy?" }
   ]);
   const [simInput, setSimInput] = useState("");
+  const [simIsLoading, setSimIsLoading] = useState(false);
+  const [knowledgeList, setKnowledgeList] = useState<KnowledgeEntry[]>([]);
+  const [loadingKnowledge, setLoadingKnowledge] = useState(false);
+  const [showKnowledgeModal, setShowKnowledgeModal] = useState(false);
+  const [newPregunta, setNewPregunta] = useState("");
+  const [newRespuesta, setNewRespuesta] = useState("");
+  const [savingKnowledge, setSavingKnowledge] = useState(false);
+
+  const loadKnowledge = useCallback(() => {
+    setLoadingKnowledge(true);
+    fetch("https://apidoctorrecetas.com/api/chat/conocimiento")
+      .then(r => r.json())
+      .then(data => {
+        if (Array.isArray(data)) setKnowledgeList(data);
+        else if (data.data && Array.isArray(data.data)) setKnowledgeList(data.data);
+      })
+      .catch(console.error)
+      .finally(() => setLoadingKnowledge(false));
+  }, []);
+
+  useEffect(() => {
+    if (currentTab === "aprendizaje") {
+      loadKnowledge();
+    }
+  }, [currentTab, loadKnowledge]);
+
+  const handleAddKnowledge = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newPregunta.trim() || !newRespuesta.trim()) return;
+    setSavingKnowledge(true);
+    try {
+      const res = await fetch("https://apidoctorrecetas.com/api/chat/conocimiento", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          pregunta: newPregunta.trim(),
+          respuesta: newRespuesta.trim()
+        })
+      });
+      if (res.ok) {
+        setShowKnowledgeModal(false);
+        setNewPregunta("");
+        setNewRespuesta("");
+        loadKnowledge();
+      } else {
+        alert("Error al guardar conocimiento");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Error de conexión");
+    } finally {
+      setSavingKnowledge(false);
+    }
+  };
 
   const toggleDate = (fecha: string) =>
     setCollapsedDates((prev) => {
@@ -505,29 +560,88 @@ export default function Home() {
         <div className="flex flex-1 flex-col bg-zinc-50 overflow-hidden">
           <div className="flex-1 overflow-y-auto p-4 md:p-6">
             <div className="max-w-3xl mx-auto space-y-4">
-              {simMessages.map((msg, i) => (
-                <div key={i} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
-                  <div className={`max-w-[85%] md:max-w-[75%] flex flex-col gap-1 ${msg.role === "user" ? "items-end" : "items-start"}`}>
-                    <span className="text-xs text-zinc-400 px-1">{msg.role === "user" ? "Tú" : "Bot (Simulador)"}</span>
-                    <div className={`px-4 py-2.5 rounded-2xl text-sm leading-relaxed whitespace-pre-wrap ${msg.role === "user" ? "bg-emerald-500 text-white rounded-br-sm" : "bg-white border border-zinc-200 text-zinc-800 rounded-bl-sm shadow-sm"}`}>
-                      {msg.text}
+              {simMessages.map((msg, i) => {
+                const isUser = msg.role === "user";
+                const botHtml = !isUser ? DOMPurify.sanitize(marked.parse(msg.text) as string) : null;
+                return (
+                  <div key={i} className={`flex ${isUser ? "justify-end" : "justify-start"}`}>
+                    <div className={`max-w-[85%] md:max-w-[75%] flex flex-col gap-1 ${isUser ? "items-end" : "items-start"}`}>
+                      <span className="text-xs text-zinc-400 px-1">{isUser ? "Tú" : "Bot (Simulador)"}</span>
+                      {botHtml ? (
+                        <div
+                          className="prose prose-sm prose-zinc max-w-none px-4 py-3 rounded-2xl rounded-bl-sm bg-white border border-zinc-200 shadow-sm
+                          prose-p:text-zinc-700 prose-p:leading-relaxed prose-p:my-1.5
+                          prose-headings:font-semibold prose-headings:text-zinc-800
+                          prose-strong:text-zinc-800 prose-strong:font-semibold
+                          prose-a:text-emerald-600 prose-a:no-underline hover:prose-a:underline prose-a:font-medium
+                          prose-ul:my-2 prose-ol:my-2 prose-li:my-0.5
+                          prose-code:text-emerald-700 prose-code:bg-emerald-50 prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-code:text-xs prose-code:font-medium prose-code:before:content-none prose-code:after:content-none
+                          prose-pre:bg-zinc-900 prose-pre:text-zinc-100 prose-pre:rounded-xl prose-pre:text-xs
+                          prose-blockquote:border-l-4 prose-blockquote:border-emerald-400 prose-blockquote:text-zinc-500 prose-blockquote:not-italic"
+                          dangerouslySetInnerHTML={{ __html: botHtml }}
+                        />
+                      ) : (
+                        <div className={`px-4 py-2.5 rounded-2xl text-sm leading-relaxed whitespace-pre-wrap ${isUser ? "bg-emerald-500 text-white rounded-br-sm" : "bg-white border border-zinc-200 text-zinc-800 rounded-bl-sm shadow-sm"}`}>
+                          {msg.text}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+              {simIsLoading && (
+                <div className="flex justify-start">
+                  <div className="max-w-[85%] md:max-w-[75%] flex flex-col gap-1 items-start">
+                    <span className="text-xs text-zinc-400 px-1">Bot (Simulador)</span>
+                    <div className="px-4 py-3 rounded-2xl rounded-bl-sm bg-white border border-zinc-200 shadow-sm flex items-center gap-1.5">
+                      <div className="w-1.5 h-1.5 rounded-full bg-zinc-300 animate-bounce" style={{ animationDelay: "0ms" }} />
+                      <div className="w-1.5 h-1.5 rounded-full bg-zinc-300 animate-bounce" style={{ animationDelay: "150ms" }} />
+                      <div className="w-1.5 h-1.5 rounded-full bg-zinc-300 animate-bounce" style={{ animationDelay: "300ms" }} />
                     </div>
                   </div>
                 </div>
-              ))}
+              )}
             </div>
           </div>
           <div className="bg-white border-t border-zinc-200 p-4">
             <form
               className="max-w-3xl mx-auto flex items-end gap-2"
-              onSubmit={(e) => {
+              onSubmit={async (e) => {
                 e.preventDefault();
-                if (!simInput.trim()) return;
-                setSimMessages(prev => [...prev, { role: "user", text: simInput }]);
+                if (!simInput.trim() || simIsLoading) return;
+                const text = simInput;
+                setSimMessages(prev => [...prev, { role: "user", text }]);
                 setSimInput("");
-                setTimeout(() => {
-                  setSimMessages(prev => [...prev, { role: "bot", text: "Esta es una respuesta simulada. La conexión con la API se hará pronto." }]);
-                }, 1000);
+                setSimIsLoading(true);
+
+                try {
+                  let anonId = localStorage.getItem("dr-recetas-sim-id");
+                  if (!anonId) {
+                    anonId = `${Math.floor(Math.random() * 1000000000)}_${Date.now()}`;
+                    localStorage.setItem("dr-recetas-sim-id", anonId);
+                  }
+                  const rawAnonId = anonId.replace(/[^0-9]/g, "").substring(0, 10);
+
+                  const apiUrl = "https://apidoctorrecetas.com/api/chat";
+                  const response = await fetch(apiUrl, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                      chat_id: Number(rawAnonId),
+                      message: text.trim(),
+                    }),
+                  });
+
+                  if (!response.ok) throw new Error(`HTTP error: ${response.status}`);
+                  const data = await response.json();
+                  const rawBotResponse = data.success === true && data.response ? data.response : "Lo siento, hubo un error de API.";
+                  setSimMessages(prev => [...prev, { role: "bot", text: rawBotResponse }]);
+                } catch (error) {
+                  console.error("Error al hablar con el bot:", error);
+                  setSimMessages(prev => [...prev, { role: "bot", text: "Error de conexión." }]);
+                } finally {
+                  setSimIsLoading(false);
+                }
               }}
             >
               <textarea
@@ -539,13 +653,14 @@ export default function Home() {
                     e.currentTarget.form?.dispatchEvent(new Event("submit", { cancelable: true, bubbles: true }));
                   }
                 }}
+                disabled={simIsLoading}
                 placeholder="Escribe un mensaje..."
-                className="flex-1 max-h-32 min-h-[44px] resize-none overflow-y-auto rounded-xl border border-zinc-300 bg-white px-4 py-2.5 text-sm text-zinc-900 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 outline-none"
+                className="flex-1 max-h-32 min-h-[44px] resize-none overflow-y-auto rounded-xl border border-zinc-300 bg-white px-4 py-2.5 text-sm text-zinc-900 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 outline-none disabled:bg-zinc-50 disabled:text-zinc-400"
                 rows={1}
               />
               <button
                 type="submit"
-                disabled={!simInput.trim()}
+                disabled={!simInput.trim() || simIsLoading}
                 className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-emerald-500 text-white transition-colors hover:bg-emerald-600 disabled:opacity-50"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
@@ -558,25 +673,123 @@ export default function Home() {
       )}
 
       {currentTab === "aprendizaje" && (
-        <div className="flex flex-1 flex-col items-center justify-center bg-zinc-50 p-6 text-center overflow-auto">
-          <div className="w-20 h-20 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-3xl mb-4 shadow-sm">
-            🧠
+        <div className="flex flex-1 flex-col bg-zinc-50 overflow-hidden relative">
+          {/* Top Bar inside the tab */}
+          <div className="flex items-center justify-between px-6 py-4 bg-white border-b border-zinc-200 shrink-0">
+            <div>
+              <h2 className="text-lg font-semibold text-zinc-800">Base de Conocimiento</h2>
+              <p className="text-xs text-zinc-500">Administra la información manual que usa el bot.</p>
+            </div>
+            <button
+              onClick={() => setShowKnowledgeModal(true)}
+              className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-xl hover:bg-blue-700 transition-colors shadow-sm"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />
+              </svg>
+              Añadir Conocimiento
+            </button>
           </div>
-          <h2 className="text-xl font-semibold text-zinc-800 mb-3">Conocimiento y Aprendizaje</h2>
-          <p className="text-sm text-zinc-500 max-w-md mb-6">
-            En esta sección visualizarás los datos que el bot está usando, su aprendizaje y su progreso. Se integrará con las APIs que proporciones.
-          </p>
-          <div className="w-full max-w-4xl bg-white border border-zinc-200 rounded-2xl shadow-sm p-6 grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="h-40 border-2 border-dashed border-zinc-200 rounded-xl flex items-center justify-center bg-zinc-50">
-              <span className="text-zinc-400 text-xs font-semibold">Fuentes de Datos</span>
-            </div>
-            <div className="h-40 border-2 border-dashed border-zinc-200 rounded-xl flex items-center justify-center bg-zinc-50">
-              <span className="text-zinc-400 text-xs font-semibold">Análisis de Entidades</span>
-            </div>
-            <div className="h-40 border-2 border-dashed border-zinc-200 rounded-xl flex items-center justify-center bg-zinc-50">
-              <span className="text-zinc-400 text-xs font-semibold">Métricas de Rendimiento</span>
+
+          {/* Main content table */}
+          <div className="flex-1 overflow-y-auto w-full max-w-7xl mx-auto p-4 md:p-6">
+            <div className="bg-white border border-zinc-200 rounded-2xl shadow-sm overflow-hidden overflow-x-auto">
+              <table className="w-full text-left border-collapse text-sm min-w-[600px]">
+                <thead className="bg-zinc-50 border-b border-zinc-200 text-zinc-500">
+                  <tr>
+                    <th className="px-5 py-3 font-medium w-16 text-center">ID</th>
+                    <th className="px-5 py-3 font-medium w-1/3">Pregunta</th>
+                    <th className="px-5 py-3 font-medium">Respuesta</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-zinc-100">
+                  {loadingKnowledge ? (
+                    <tr>
+                      <td colSpan={3} className="px-5 py-8 text-center text-zinc-400">
+                        Cargando conocimiento...
+                      </td>
+                    </tr>
+                  ) : knowledgeList.length === 0 ? (
+                    <tr>
+                      <td colSpan={3} className="px-5 py-8 text-center text-zinc-400">
+                        No hay elementos en la base de conocimiento aún.
+                      </td>
+                    </tr>
+                  ) : (
+                    knowledgeList.map(k => (
+                      <tr key={k.id} className="hover:bg-zinc-50 transition-colors group">
+                        <td className="px-5 py-4 text-center text-zinc-400 font-medium">#{k.id}</td>
+                        <td className="px-5 py-4 text-zinc-800 font-medium align-top leading-relaxed">{k.pregunta}</td>
+                        <td className="px-5 py-4 text-zinc-600 align-top leading-relaxed">{k.respuesta}</td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
             </div>
           </div>
+
+          {/* Add Knowledge Modal */}
+          {showKnowledgeModal && (
+            <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
+              <div className="bg-white rounded-2xl shadow-xl w-full max-w-2xl overflow-hidden flex flex-col">
+                <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-100 bg-zinc-50/50">
+                  <h3 className="text-base font-semibold text-zinc-900">Añadir Nuevo Conocimiento</h3>
+                  <button onClick={() => setShowKnowledgeModal(false)} className="text-zinc-400 hover:text-zinc-600 transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                    </svg>
+                  </button>
+                </div>
+                <form onSubmit={handleAddKnowledge} className="flex flex-col p-6 gap-5">
+                  <div>
+                    <label className="block text-sm font-medium text-zinc-700 mb-2">
+                      Pregunta (Regla o Concepto)
+                    </label>
+                    <textarea
+                      value={newPregunta}
+                      onChange={e => setNewPregunta(e.target.value)}
+                      required
+                      rows={2}
+                      className="w-full rounded-xl border border-zinc-300 px-4 py-3 text-sm text-zinc-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none resize-none"
+                      placeholder="Ej. ¿De dónde debo obtener los productos disponibles...?"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-zinc-700 mb-2">
+                      Respuesta (Indicación para el Bot)
+                    </label>
+                    <textarea
+                      value={newRespuesta}
+                      onChange={e => setNewRespuesta(e.target.value)}
+                      required
+                      rows={5}
+                      className="w-full rounded-xl border border-zinc-300 px-4 py-3 text-sm text-zinc-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none resize-none"
+                      placeholder="Ej. SIEMPRE debo consultar los productos reales disponibles..."
+                    />
+                  </div>
+
+                  <div className="flex items-center justify-end gap-3 mt-2 border-t border-zinc-100 pt-5">
+                    <button
+                      type="button"
+                      onClick={() => setShowKnowledgeModal(false)}
+                      className="px-5 py-2.5 text-sm font-medium text-zinc-600 bg-white border border-zinc-200 rounded-xl hover:bg-zinc-50 transition-colors"
+                    >
+                      Cancelar
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={savingKnowledge}
+                      className="flex items-center gap-2 px-5 py-2.5 text-sm font-medium text-white bg-blue-600 rounded-xl hover:bg-blue-700 transition-colors disabled:opacity-50"
+                    >
+                      {savingKnowledge && <div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />}
+                      Guardar Conocimiento
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
