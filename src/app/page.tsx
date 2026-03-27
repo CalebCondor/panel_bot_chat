@@ -559,7 +559,7 @@ export default function Home() {
       {currentTab === "chat" && (
         <div className="flex flex-1 flex-col bg-zinc-50 overflow-hidden">
           {/* Top Bar inside the tab */}
-          <div className="flex items-center justify-between px-6 py-4 bg-white border-b border-zinc-200 shrink-0">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between px-4 md:px-6 py-4 bg-white border-b border-zinc-200 shrink-0 gap-3">
             <div>
               <h2 className="text-lg font-semibold text-zinc-800">Simulador de Chat</h2>
               <p className="text-xs text-zinc-500">Prueba cómo responde tu bot en tiempo real.</p>
@@ -572,7 +572,7 @@ export default function Home() {
                 localStorage.removeItem("dr-recetas-sim-id");
                 setSimInput("");
               }}
-              className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-zinc-600 bg-white border border-zinc-200 rounded-xl hover:bg-zinc-50 transition-colors shadow-sm"
+              className="flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-zinc-600 bg-white border border-zinc-200 rounded-xl hover:bg-zinc-50 transition-colors shadow-sm w-full sm:w-auto shrink-0"
               title="Borrar historial y reiniciar simulador"
             >
               <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-zinc-400" viewBox="0 0 20 20" fill="currentColor">
@@ -699,14 +699,14 @@ export default function Home() {
       {currentTab === "aprendizaje" && (
         <div className="flex flex-1 flex-col bg-zinc-50 overflow-hidden relative">
           {/* Top Bar inside the tab */}
-          <div className="flex items-center justify-between px-6 py-4 bg-white border-b border-zinc-200 shrink-0">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between px-4 md:px-6 py-4 bg-white border-b border-zinc-200 shrink-0 gap-3">
             <div>
               <h2 className="text-lg font-semibold text-zinc-800">Base de Conocimiento</h2>
               <p className="text-xs text-zinc-500">Administra la información manual que usa el bot.</p>
             </div>
             <button
               onClick={() => setShowKnowledgeModal(true)}
-              className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-xl hover:bg-blue-700 transition-colors shadow-sm"
+              className="flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-xl hover:bg-blue-700 transition-colors shadow-sm w-full sm:w-auto shrink-0"
             >
               <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 20 20" fill="currentColor">
                 <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />
@@ -793,18 +793,18 @@ export default function Home() {
                     />
                   </div>
 
-                  <div className="flex items-center justify-end gap-3 mt-2 border-t border-zinc-100 pt-5">
+                  <div className="flex flex-col sm:flex-row items-center justify-end gap-3 mt-2 border-t border-zinc-100 pt-5">
                     <button
                       type="button"
                       onClick={() => setShowKnowledgeModal(false)}
-                      className="px-5 py-2.5 text-sm font-medium text-zinc-600 bg-white border border-zinc-200 rounded-xl hover:bg-zinc-50 transition-colors"
+                      className="w-full sm:w-auto px-5 py-2.5 text-sm font-medium text-zinc-600 bg-white border border-zinc-200 rounded-xl hover:bg-zinc-50 transition-colors order-2 sm:order-1"
                     >
                       Cancelar
                     </button>
                     <button
                       type="submit"
                       disabled={savingKnowledge}
-                      className="flex items-center gap-2 px-5 py-2.5 text-sm font-medium text-white bg-blue-600 rounded-xl hover:bg-blue-700 transition-colors disabled:opacity-50"
+                      className="flex items-center justify-center gap-2 w-full sm:w-auto px-5 py-2.5 text-sm font-medium text-white bg-blue-600 rounded-xl hover:bg-blue-700 transition-colors disabled:opacity-50 order-1 sm:order-2"
                     >
                       {savingKnowledge && <div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />}
                       Guardar Conocimiento
