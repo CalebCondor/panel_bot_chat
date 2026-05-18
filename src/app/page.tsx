@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback, useRef, useMemo } from "react";
+import { useRouter } from "next/navigation";
 import DOMPurify from "dompurify";
 import { marked } from "marked";
 
@@ -65,6 +66,24 @@ function formatDate(dateStr: string): string {
 }
 
 export default function Home() {
+  const router = useRouter();
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      if (sessionStorage.getItem("dr_panel_auth") === "1") {
+        setIsAuthenticated(true);
+      } else {
+        router.replace("/login");
+      }
+    }
+  }, [router]);
+
+  const handleLogout = () => {
+    sessionStorage.removeItem("dr_panel_auth");
+    router.replace("/login");
+  };
+
   const [userIds, setUserIds] = useState<UserEntry[]>([]);
   const [selectedUser, setSelectedUser] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -263,6 +282,14 @@ export default function Home() {
     }
   }, [groupedByDate]);
 
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-zinc-100">
+        <div className="w-6 h-6 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col h-screen bg-zinc-100">
       {/* Header */}
@@ -286,12 +313,23 @@ export default function Home() {
           </h1>
           <p className="text-xs text-zinc-500">Panel de conversaciones</p>
         </div>
-        <div className="ml-auto shrink-0">
+        <div className="ml-auto flex items-center gap-2 shrink-0">
           {!loadingUsers && (
-            <span className="text-xs text-zinc-500 bg-zinc-100 px-3 py-1 rounded-full border border-zinc-200">
+            <span className="text-xs text-zinc-500 bg-zinc-100 px-3 py-1 rounded-full border border-zinc-200 hidden sm:inline">
               {userIds.length} usuarios
             </span>
           )}
+          <button
+            onClick={handleLogout}
+            title="Cerrar sesión"
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-zinc-500 hover:text-red-600 hover:bg-red-50 border border-zinc-200 hover:border-red-200 rounded-lg transition-colors"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" viewBox="0 0 20 20" fill="currentColor">
+              <path fillRule="evenodd" d="M3 3a1 1 0 00-1 1v12a1 1 0 001 1h7a1 1 0 100-2H4V5h6a1 1 0 100-2H3zm11.707 4.293a1 1 0 010 1.414L13.414 10l1.293 1.293a1 1 0 01-1.414 1.414l-2-2a1 1 0 010-1.414l2-2a1 1 0 011.414 0z" clipRule="evenodd" />
+              <path fillRule="evenodd" d="M13 10a1 1 0 011-1h4a1 1 0 110 2h-4a1 1 0 01-1-1z" clipRule="evenodd" />
+            </svg>
+            <span className="hidden sm:inline">Salir</span>
+          </button>
         </div>
       </header>
 
