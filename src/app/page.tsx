@@ -551,7 +551,7 @@ export default function Home() {
                         <span className="hidden sm:inline">{linkCopied ? "¡Copiado!" : "Copiar enlace"}</span>
                       </button>
                       <button
-                        onClick={() => setShowSummary(true)}
+                        onClick={() => window.open(`/resumen?chat=${encodeURIComponent(selectedUser!)}&fecha=${encodeURIComponent(selectedFecha!)}`, "_blank")}
                         className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-lg hover:bg-emerald-100 transition-colors"
                       >
                         <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" viewBox="0 0 20 20" fill="currentColor">
