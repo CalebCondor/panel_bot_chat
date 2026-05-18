@@ -351,7 +351,7 @@ export default function Home() {
         <div className="ml-auto flex items-center gap-2 shrink-0">
           {!loadingUsers && (
             <span className="text-xs text-zinc-500 bg-zinc-100 px-3 py-1 rounded-full border border-zinc-200 hidden sm:inline">
-              {userIds.length} usuarios
+              {userIds.length} Chats
             </span>
           )}
           <button
