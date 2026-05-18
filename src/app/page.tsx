@@ -46,6 +46,14 @@ type UserChatResponse = {
   messages: Message[];
 };
 
+function toPlainText(markdown: string): string {
+  if (typeof document === "undefined") return markdown;
+  const html = DOMPurify.sanitize(marked.parse(markdown) as string);
+  const div = document.createElement("div");
+  div.innerHTML = html;
+  return (div.textContent || div.innerText || "").trim();
+}
+
 function roleLabel(role: string): string {
   if (role === "human" || role === "user") return "Usuario";
   if (role === "ai" || role === "assistant") return "Dr. Recetas";
@@ -298,7 +306,7 @@ export default function Home() {
       "─── Turnos ───",
       ...messages
         .filter((m) => extractText(m.content).trim())
-        .map((m, i) => `${i + 1}. [${roleLabel(m.role)}] ${extractText(m.content).trim().slice(0, 150)}`),
+        .map((m, i) => `${i + 1}. [${roleLabel(m.role)}] ${toPlainText(extractText(m.content).trim()).slice(0, 150)}`),
     ];
     return lines.filter((l) => l !== undefined && !(lines.indexOf(l) > 0 && l === "")).join("\n");
   }
@@ -960,7 +968,8 @@ export default function Home() {
                     {visibleMsgs.map((msg, i) => {
                       const isUser = roleIsUser(msg.role);
                       const text = extractText(msg.content).trim();
-                      const snippet = text.length > 120 ? text.slice(0, 120) + "…" : text;
+                      const plain = toPlainText(text);
+                      const snippet = plain.length > 120 ? plain.slice(0, 120) + "…" : plain;
                       const time = msg.created_at
                         ? new Date(msg.created_at as string).toLocaleTimeString("es-MX", { hour: "2-digit", minute: "2-digit" })
                         : null;
