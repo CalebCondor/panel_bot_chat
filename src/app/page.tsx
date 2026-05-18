@@ -97,8 +97,11 @@ export default function Home() {
   const [deletingKey, setDeletingKey] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<{ chatId: string; fecha: string } | null>(null);
   const [collapsedDates, setCollapsedDates] = useState<Set<string>>(new Set());
+  const [selectedFecha, setSelectedFecha] = useState<string | null>(null);
   const [showSummary, setShowSummary] = useState(false);
   const chatTopRef = useRef<HTMLDivElement>(null);
+  const urlParamsHandled = useRef(false);
+  const [linkCopied, setLinkCopied] = useState(false);
   const [currentTab, setCurrentTab] = useState<"conversaciones" | "chat" | "aprendizaje">("conversaciones");
   const [simMessages, setSimMessages] = useState<{ role: "user" | "bot", text: string }[]>([
     { role: "bot", text: "¡Hola! Soy el simulador de Dr. Recetas. ¿En qué te puedo ayudar hoy?" }
@@ -181,19 +184,27 @@ export default function Home() {
       .finally(() => setLoadingUsers(false));
   }, []);
 
-  const loadChat = useCallback((userId: string) => {
+  const loadChat = useCallback((userId: string, fecha: string) => {
     setSelectedUser(userId);
+    setSelectedFecha(fecha);
     setShowSidebar(false);
     setMessages([]);
     setTotalMessages(0);
     setLoadingChat(true);
     setErrorChat(null);
+    setLinkCopied(false);
+    if (typeof window !== "undefined") {
+      window.history.replaceState(null, "", `?chat=${encodeURIComponent(userId)}&fecha=${encodeURIComponent(fecha)}`);
+    }
     fetch(`${API_BASE}/chat/user/${userId}`)
       .then((r) => r.json())
       .then((data: UserChatResponse) => {
         if (data.success) {
-          setMessages(data.messages);
-          setTotalMessages(data.total);
+          const filtered = data.messages.filter((m) =>
+            m.created_at ? m.created_at.startsWith(fecha) : true
+          );
+          setMessages(filtered);
+          setTotalMessages(filtered.length);
         } else {
           setErrorChat("Error al cargar mensajes");
         }
@@ -201,6 +212,18 @@ export default function Home() {
       .catch(() => setErrorChat("No se pudo cargar el chat"))
       .finally(() => setLoadingChat(false));
   }, []);
+
+  useEffect(() => {
+    if (isAuthenticated && !urlParamsHandled.current) {
+      urlParamsHandled.current = true;
+      const params = new URLSearchParams(window.location.search);
+      const chat = params.get("chat");
+      const fecha = params.get("fecha");
+      if (chat && fecha) {
+        loadChat(chat, fecha);
+      }
+    }
+  }, [isAuthenticated, loadChat]);
 
   useEffect(() => {
     if (!loadingChat) {
@@ -225,16 +248,20 @@ export default function Home() {
             )
             .filter((u) => u.fechas.length > 0)
         );
-        if (selectedUser === chatId) {
+        if (selectedUser === chatId && selectedFecha === fecha) {
           setSelectedUser(null);
+          setSelectedFecha(null);
           setMessages([]);
           setShowSidebar(true);
+          if (typeof window !== "undefined") {
+            window.history.replaceState(null, "", window.location.pathname);
+          }
         }
       }
     } finally {
       setDeletingKey(null);
     }
-  }, [selectedUser]);
+  }, [selectedUser, selectedFecha]);
 
   const groupedByDate = useMemo(() => {
     const filtered = userIds.filter((u) =>
@@ -411,14 +438,14 @@ export default function Home() {
                       {!isCollapsed && users.map((user, idx) => (
                         <div
                           key={user.chat_id}
-                          className={`flex items-center w-full border-l-2 transition-colors text-sm group ${selectedUser === user.chat_id
+                          className={`flex items-center w-full border-l-2 transition-colors text-sm group ${selectedUser === user.chat_id && selectedFecha === fecha
                             ? "bg-emerald-50 border-emerald-500"
                             : "border-transparent hover:bg-zinc-50"
                             }`}
                         >
                           <button
-                            onClick={() => loadChat(user.chat_id)}
-                            className={`flex items-center gap-3 flex-1 min-w-0 px-4 py-3 text-left ${selectedUser === user.chat_id
+                            onClick={() => loadChat(user.chat_id, fecha)}
+                            className={`flex items-center gap-3 flex-1 min-w-0 px-4 py-3 text-left ${selectedUser === user.chat_id && selectedFecha === fecha
                               ? "text-emerald-700 font-medium"
                               : "text-zinc-700"
                               }`}
@@ -488,22 +515,43 @@ export default function Home() {
                     <p className="text-sm font-semibold text-zinc-900">
                       Usuario {selectedUser}
                     </p>
-                    {!loadingChat && (
-                      <p className="text-xs text-zinc-500">
-                        {totalMessages} mensaje{totalMessages !== 1 ? "s" : ""}
-                      </p>
-                    )}
+                    <p className="text-xs text-zinc-500">
+                      {selectedFecha ? formatDate(selectedFecha) : ""}
+                      {!loadingChat && ` · ${totalMessages} mensaje${totalMessages !== 1 ? "s" : ""}`}
+                    </p>
                   </div>
                   {!loadingChat && messages.length > 0 && (
-                    <button
-                      onClick={() => setShowSummary(true)}
-                      className="ml-auto flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-lg hover:bg-emerald-100 transition-colors shrink-0"
-                    >
-                      <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" viewBox="0 0 20 20" fill="currentColor">
-                        <path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clipRule="evenodd" />
-                      </svg>
-                      Resumen
-                    </button>
+                    <div className="ml-auto flex items-center gap-2 shrink-0">
+                      <button
+                        onClick={() => {
+                          navigator.clipboard.writeText(window.location.href);
+                          setLinkCopied(true);
+                          setTimeout(() => setLinkCopied(false), 2000);
+                        }}
+                        className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-zinc-500 bg-white border border-zinc-200 rounded-lg hover:bg-zinc-50 transition-colors"
+                        title="Copiar enlace único de esta conversación"
+                      >
+                        {linkCopied ? (
+                          <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5 text-emerald-500" viewBox="0 0 20 20" fill="currentColor">
+                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                          </svg>
+                        ) : (
+                          <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" viewBox="0 0 20 20" fill="currentColor">
+                            <path d="M12.586 4.586a2 2 0 112.828 2.828l-3 3a2 2 0 01-2.828 0 1 1 0 00-1.414 1.414 4 4 0 005.656 0l3-3a4 4 0 00-5.656-5.656l-1.5 1.5a1 1 0 101.414 1.414l1.5-1.5zm-5 5a2 2 0 012.828 0 1 1 0 101.414-1.414 4 4 0 00-5.656 0l-3 3a4 4 0 105.656 5.656l1.5-1.5a1 1 0 10-1.414-1.414l-1.5 1.5a2 2 0 11-2.828-2.828l3-3z" />
+                          </svg>
+                        )}
+                        <span className="hidden sm:inline">{linkCopied ? "¡Copiado!" : "Copiar enlace"}</span>
+                      </button>
+                      <button
+                        onClick={() => setShowSummary(true)}
+                        className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-lg hover:bg-emerald-100 transition-colors"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" viewBox="0 0 20 20" fill="currentColor">
+                          <path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clipRule="evenodd" />
+                        </svg>
+                        Resumen
+                      </button>
+                    </div>
                   )}
                 </div>
 
@@ -519,7 +567,7 @@ export default function Home() {
                       <div className="flex flex-col items-center justify-center py-20 gap-2 text-center">
                         <span className="text-zinc-400 text-sm">{errorChat}</span>
                         <button
-                          onClick={() => loadChat(selectedUser)}
+                          onClick={() => selectedUser && selectedFecha && loadChat(selectedUser, selectedFecha)}
                           className="text-xs text-emerald-600 hover:underline"
                         >
                           Reintentar
