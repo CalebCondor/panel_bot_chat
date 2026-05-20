@@ -125,7 +125,7 @@ export default function Home() {
 
   const loadKnowledge = useCallback(() => {
     setLoadingKnowledge(true);
-    fetch("https://apidoctorrecetas.com/api/chat/conocimiento")
+    fetch("http://islamed-islamedagente-mqpb5c-15b5e0-187-77-15-77.sslip.io/api/chat/conocimiento")
       .then(r => r.json())
       .then(data => {
         if (Array.isArray(data)) setKnowledgeList(data);
@@ -146,7 +146,7 @@ export default function Home() {
     if (!newPregunta.trim() || !newRespuesta.trim()) return;
     setSavingKnowledge(true);
     try {
-      const res = await fetch("https://apidoctorrecetas.com/api/chat/conocimiento", {
+      const res = await fetch("http://islamed-islamedagente-mqpb5c-15b5e0-187-77-15-77.sslip.io/api/chat/conocimiento", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -182,7 +182,7 @@ export default function Home() {
     });
 
   useEffect(() => {
-    fetch(`${API_BASE}/chat/users`)
+    fetch(`http://islamed-islamedagente-mqpb5c-15b5e0-187-77-15-77.sslip.io/api/chat/users`)
       .then((r) => r.json())
       .then((data: UsersResponse) => {
         if (data.success) setUserIds(data.user_ids);
@@ -204,7 +204,7 @@ export default function Home() {
     if (typeof window !== "undefined") {
       window.history.replaceState(null, "", `?chat=${encodeURIComponent(userId)}&fecha=${encodeURIComponent(fecha)}`);
     }
-    fetch(`${API_BASE}/chat/user/${userId}`)
+    fetch(`http://islamed-islamedagente-mqpb5c-15b5e0-187-77-15-77.sslip.io/api/chat/user/${userId}`)
       .then((r) => r.json())
       .then((data: UserChatResponse) => {
         if (data.success) {
@@ -740,7 +740,7 @@ export default function Home() {
                   }
                   const rawAnonId = anonId.replace(/[^0-9]/g, "").substring(0, 10);
 
-                  const apiUrl = "https://apidoctorrecetas.com/api/chat";
+                  const apiUrl = "http://islamed-islamedagente-mqpb5c-15b5e0-187-77-15-77.sslip.io/api/chat";
                   const response = await fetch(apiUrl, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
