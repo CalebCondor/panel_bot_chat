@@ -122,6 +122,7 @@ export default function Home() {
   const [newPregunta, setNewPregunta] = useState("");
   const [newRespuesta, setNewRespuesta] = useState("");
   const [savingKnowledge, setSavingKnowledge] = useState(false);
+  const [lastMessageTimes, setLastMessageTimes] = useState<Record<string, string>>({});
 
   const loadKnowledge = useCallback(() => {
     setLoadingKnowledge(true);
@@ -182,7 +183,7 @@ export default function Home() {
     });
 
   useEffect(() => {
-    fetch(`http://islamed-islamedagente-mqpb5c-15b5e0-187-77-15-77.sslip.io/api/chat/users`)
+    fetch(`https://agente.apidoctorrecetas.com/api/chat/users`)
       .then((r) => r.json())
       .then((data: UsersResponse) => {
         if (data.success) setUserIds(data.user_ids);
@@ -191,6 +192,28 @@ export default function Home() {
       .catch(() => setErrorUsers("No se pudo conectar con la API"))
       .finally(() => setLoadingUsers(false));
   }, []);
+
+  useEffect(() => {
+    if (userIds.length === 0) return;
+    userIds.forEach((user) => {
+      fetch(`https://agente.apidoctorrecetas.com/api/chat/user/${user.chat_id}`)
+        .then((r) => r.json())
+        .then((data: UserChatResponse) => {
+          if (!data.success) return;
+          const updates: Record<string, string> = {};
+          for (const fecha of user.fechas) {
+            const last = data.messages
+              .filter((m) => m.created_at?.startsWith(fecha))
+              .reduce<string>((acc, m) => (!acc || (m.created_at ?? "") > acc ? (m.created_at ?? "") : acc), "");
+            if (last) updates[`${user.chat_id}|${fecha}`] = last;
+          }
+          if (Object.keys(updates).length > 0) {
+            setLastMessageTimes((prev) => ({ ...prev, ...updates }));
+          }
+        })
+        .catch(() => {});
+    });
+  }, [userIds]);
 
   const loadChat = useCallback((userId: string, fecha: string) => {
     setSelectedUser(userId);
@@ -204,7 +227,7 @@ export default function Home() {
     if (typeof window !== "undefined") {
       window.history.replaceState(null, "", `?chat=${encodeURIComponent(userId)}&fecha=${encodeURIComponent(fecha)}`);
     }
-    fetch(`http://islamed-islamedagente-mqpb5c-15b5e0-187-77-15-77.sslip.io/api/chat/user/${userId}`)
+    fetch(`https://agente.apidoctorrecetas.com/api/chat/user/${userId}`)
       .then((r) => r.json())
       .then((data: UserChatResponse) => {
         if (data.success) {
@@ -282,8 +305,17 @@ export default function Home() {
         map[fecha].push(user);
       }
     }
-    return Object.entries(map).sort(([a], [b]) => b.localeCompare(a));
-  }, [userIds, searchQuery]);
+    return Object.entries(map)
+      .sort(([a], [b]) => b.localeCompare(a))
+      .map(([fecha, users]) => [
+        fecha,
+        [...users].sort((a, b) => {
+          const ta = lastMessageTimes[`${a.chat_id}|${fecha}`] ?? "";
+          const tb = lastMessageTimes[`${b.chat_id}|${fecha}`] ?? "";
+          return tb.localeCompare(ta);
+        }),
+      ] as [string, UserEntry[]]);
+  }, [userIds, searchQuery, lastMessageTimes]);
 
   const initializedCollapse = useRef(false);
 
@@ -297,7 +329,7 @@ export default function Home() {
     const last = dates.length > 1 ? dates[dates.length - 1].toLocaleString("es-MX", { dateStyle: "short", timeStyle: "short" }) : null;
     const lines: string[] = [
       `📋 Resumen de conversación`,
-      
+
       `Chat ID: ${selectedUser}`,
       first ? `Inicio: ${first}` : "",
       last ? `Fin: ${last}` : "",
@@ -741,7 +773,7 @@ export default function Home() {
                   }
                   const rawAnonId = anonId.replace(/[^0-9]/g, "").substring(0, 10);
 
-                  const apiUrl = "http://islamed-islamedagente-mqpb5c-15b5e0-187-77-15-77.sslip.io/api/chat";
+                  const apiUrl = "https://agente.apidoctorrecetas.com/api/chat";
                   const response = await fetch(apiUrl, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
