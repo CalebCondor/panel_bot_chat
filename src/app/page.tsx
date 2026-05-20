@@ -297,6 +297,7 @@ export default function Home() {
     const last = dates.length > 1 ? dates[dates.length - 1].toLocaleString("es-MX", { dateStyle: "short", timeStyle: "short" }) : null;
     const lines: string[] = [
       `📋 Resumen de conversación`,
+      
       `Chat ID: ${selectedUser}`,
       first ? `Inicio: ${first}` : "",
       last ? `Fin: ${last}` : "",
