@@ -10,8 +10,8 @@ const poppins = Poppins({
 });
 
 export const metadata: Metadata = {
-  title: "Dr. Recetas Bot — Panel",
-  description: "Panel de conversaciones del chat bot",
+  title: "Islamed — Panel",
+  description: "Panel de conversaciones del agente Islamed",
 };
 
 export default function RootLayout({

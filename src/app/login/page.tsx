@@ -44,7 +44,7 @@ export default function LoginPage() {
             </svg>
           </div>
           <h1 className="text-2xl font-bold text-gray-800 dark:text-white tracking-tight">
-            Dr. Recetas
+            Islamed
           </h1>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
             Panel de administración
@@ -109,7 +109,7 @@ export default function LoginPage() {
         </div>
 
         <p className="text-center text-xs text-gray-400 mt-6">
-          © {new Date().getFullYear()} Dr. Recetas · Acceso restringido
+          © {new Date().getFullYear()} Islamed · Acceso restringido
         </p>
       </div>
     </div>

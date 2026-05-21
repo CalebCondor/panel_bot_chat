@@ -56,7 +56,7 @@ function toPlainText(markdown: string): string {
 
 function roleLabel(role: string): string {
   if (role === "human" || role === "user") return "Usuario";
-  if (role === "ai" || role === "assistant") return "Dr. Recetas";
+  if (role === "ai" || role === "assistant") return "Islamed";
   return role;
 }
 
@@ -112,7 +112,7 @@ export default function Home() {
   const [linkCopied, setLinkCopied] = useState(false);
   const [currentTab, setCurrentTab] = useState<"conversaciones" | "chat" | "aprendizaje">("conversaciones");
   const [simMessages, setSimMessages] = useState<{ role: "user" | "bot", text: string }[]>([
-    { role: "bot", text: "¡Hola! Soy el simulador de Dr. Recetas. ¿En qué te puedo ayudar hoy?" }
+    { role: "bot", text: "¡Hola! Soy el agente Islamed. ¿En qué te puedo ayudar hoy?" }
   ]);
   const [simInput, setSimInput] = useState("");
   const [simIsLoading, setSimIsLoading] = useState(false);
@@ -334,7 +334,7 @@ export default function Home() {
       first ? `Inicio: ${first}` : "",
       last ? `Fin: ${last}` : "",
       `Mensajes del usuario: ${userMsgs.length}`,
-      `Respuestas del bot: ${botMsgs.length}`,
+      `Respuestas del agente: ${botMsgs.length}`,
       "",
       "─── Turnos ───",
       ...messages
@@ -373,11 +373,11 @@ export default function Home() {
           </button>
         )}
         <div className="flex items-center justify-center w-9 h-9 rounded-full bg-emerald-500 text-white font-bold text-sm shrink-0">
-          DR
+          IS
         </div>
         <div className="min-w-0">
           <h1 className="text-base font-semibold text-zinc-900 leading-tight truncate">
-            Dr. Recetas Bot
+            Islamed
           </h1>
           <p className="text-xs text-zinc-500">Panel de conversaciones</p>
         </div>
@@ -413,7 +413,7 @@ export default function Home() {
           onClick={() => setCurrentTab("chat")}
           className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap mt-1 ${currentTab === "chat" ? "border-emerald-500 text-emerald-600" : "border-transparent text-zinc-500 hover:text-zinc-700 hover:border-zinc-300"}`}
         >
-          Chatear con el Bot
+          Chatear con el Agente
         </button>
         <button
           onClick={() => setCurrentTab("aprendizaje")}
@@ -689,12 +689,12 @@ export default function Home() {
           <div className="flex flex-col sm:flex-row sm:items-center justify-between px-4 md:px-6 py-4 bg-white border-b border-zinc-200 shrink-0 gap-3">
             <div>
               <h2 className="text-lg font-semibold text-zinc-800">Simulador de Chat</h2>
-              <p className="text-xs text-zinc-500">Prueba cómo responde tu bot en tiempo real.</p>
+              <p className="text-xs text-zinc-500">Prueba cómo responde el agente en tiempo real.</p>
             </div>
             <button
               onClick={() => {
                 setSimMessages([
-                  { role: "bot", text: "¡Hola! Soy el simulador de Dr. Recetas. ¿En qué te puedo ayudar hoy?" }
+                  { role: "bot", text: "¡Hola! Soy el agente Islamed. ¿En qué te puedo ayudar hoy?" }
                 ]);
                 localStorage.removeItem("dr-recetas-sim-id");
                 setSimInput("");
