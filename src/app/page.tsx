@@ -126,7 +126,7 @@ export default function Home() {
 
   const loadKnowledge = useCallback(() => {
     setLoadingKnowledge(true);
-    fetch("http://islamed-islamedagente-mqpb5c-15b5e0-187-77-15-77.sslip.io/api/chat/conocimiento")
+    fetch("https://agente.apidoctorrecetas.com/api/chat/conocimiento")
       .then(r => r.json())
       .then(data => {
         if (Array.isArray(data)) setKnowledgeList(data);
@@ -147,7 +147,7 @@ export default function Home() {
     if (!newPregunta.trim() || !newRespuesta.trim()) return;
     setSavingKnowledge(true);
     try {
-      const res = await fetch("http://islamed-islamedagente-mqpb5c-15b5e0-187-77-15-77.sslip.io/api/chat/conocimiento", {
+      const res = await fetch("https://agente.apidoctorrecetas.com/api/chat/conocimiento", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
