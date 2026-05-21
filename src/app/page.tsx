@@ -632,7 +632,7 @@ export default function Home() {
                             className={`flex ${isUser ? "justify-end" : "justify-start"}`}
                           >
                             <div
-                              className={`max-w-[85%] md:max-w-[75%] flex flex-col gap-1 ${isUser ? "items-end" : "items-start"
+                              className={`max-w-[85%] md:max-w-[75%] min-w-0 flex flex-col gap-1 ${isUser ? "items-end" : "items-start"
                                 }`}
                             >
                               <span className="text-xs text-zinc-400 px-1">
@@ -640,7 +640,7 @@ export default function Home() {
                               </span>
                               {botHtml ? (
                                 <div
-                                  className="prose prose-sm prose-zinc max-w-none px-4 py-3 rounded-2xl rounded-bl-sm bg-white border border-zinc-200 shadow-sm
+                                  className="prose prose-sm prose-zinc max-w-none overflow-hidden px-4 py-3 rounded-2xl rounded-bl-sm bg-white border border-zinc-200 shadow-sm
                                   prose-p:text-zinc-700 prose-p:leading-relaxed prose-p:my-1.5
                                   prose-headings:font-semibold prose-headings:text-zinc-800
                                   prose-strong:text-zinc-800 prose-strong:font-semibold
@@ -716,11 +716,11 @@ export default function Home() {
                 const botHtml = !isUser ? DOMPurify.sanitize(marked.parse(msg.text) as string) : null;
                 return (
                   <div key={i} className={`flex ${isUser ? "justify-end" : "justify-start"}`}>
-                    <div className={`max-w-[85%] md:max-w-[75%] flex flex-col gap-1 ${isUser ? "items-end" : "items-start"}`}>
+                    <div className={`max-w-[85%] md:max-w-[75%] min-w-0 flex flex-col gap-1 ${isUser ? "items-end" : "items-start"}`}>
                       <span className="text-xs text-zinc-400 px-1">{isUser ? "Tú" : "Bot (Simulador)"}</span>
                       {botHtml ? (
                         <div
-                          className="prose prose-sm prose-zinc max-w-none px-4 py-3 rounded-2xl rounded-bl-sm bg-white border border-zinc-200 shadow-sm
+                          className="prose prose-sm prose-zinc max-w-none overflow-hidden px-4 py-3 rounded-2xl rounded-bl-sm bg-white border border-zinc-200 shadow-sm
                           prose-p:text-zinc-700 prose-p:leading-relaxed prose-p:my-1.5
                           prose-headings:font-semibold prose-headings:text-zinc-800
                           prose-strong:text-zinc-800 prose-strong:font-semibold
