@@ -359,7 +359,7 @@ export default function Home() {
   }
 
   return (
-    <div className="flex flex-col h-screen bg-zinc-100">
+    <div className="flex flex-col h-full bg-zinc-100">
       {/* Header */}
       <header className="flex items-center gap-3 px-4 md:px-6 py-4 bg-white border-b border-zinc-200 shrink-0 shadow-sm">
         {/* Mobile back button */}

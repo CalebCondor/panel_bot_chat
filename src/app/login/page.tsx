@@ -34,7 +34,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-emerald-50 to-teal-100 dark:from-gray-900 dark:to-gray-800 px-4">
+    <div className="min-h-full flex items-center justify-center bg-linear-to-br from-emerald-50 to-teal-100 dark:from-gray-900 dark:to-gray-800 px-4">
       <div className="w-full max-w-sm">
         {/* Logo / Título */}
         <div className="text-center mb-8">
@@ -68,7 +68,7 @@ export default function LoginPage() {
                 value={usuario}
                 onChange={(e) => setUsuario(e.target.value)}
                 required
-                className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition text-sm"
+                className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition text-base md:text-sm"
                 placeholder="admin"
               />
             </div>
@@ -87,7 +87,7 @@ export default function LoginPage() {
                 value={contrasena}
                 onChange={(e) => setContrasena(e.target.value)}
                 required
-                className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition text-sm"
+                className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition text-base md:text-sm"
                 placeholder="••••••••"
               />
             </div>
