@@ -136,7 +136,7 @@ export default function ResumenPage() {
   const botCount = visibleMessages.filter((m) => !roleIsUser(m.role)).length;
 
   return (
-    <div className="min-h-screen bg-zinc-50 flex flex-col">
+    <div className=" bg-zinc-50 flex flex-col">
       {/* Header */}
       <header className="sticky top-0 z-10 bg-white border-b border-zinc-200 shadow-sm">
         <div className="max-w-3xl mx-auto px-4 md:px-6 py-4 flex items-center gap-3">
