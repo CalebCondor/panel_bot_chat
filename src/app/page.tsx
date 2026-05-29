@@ -552,11 +552,11 @@ export default function Home() {
                   <div className="flex items-center justify-center w-8 h-8 rounded-full bg-emerald-100 text-emerald-700 text-xs font-bold shrink-0">
                     {String(selectedUser).slice(-2)}
                   </div>
-                  <div>
-                    <p className="text-sm font-semibold text-zinc-900">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-zinc-900 truncate">
                       Usuario {selectedUser}
                     </p>
-                    <p className="text-xs text-zinc-500">
+                    <p className="text-xs text-zinc-500 truncate">
                       {selectedFecha ? formatDate(selectedFecha) : ""}
                       {!loadingChat && ` · ${totalMessages} mensaje${totalMessages !== 1 ? "s" : ""}`}
                     </p>
@@ -590,7 +590,7 @@ export default function Home() {
                         <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" viewBox="0 0 20 20" fill="currentColor">
                           <path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clipRule="evenodd" />
                         </svg>
-                        Resumen
+                        <span className="hidden sm:inline">Resumen</span>
                       </button>
                     </div>
                   )}
@@ -640,7 +640,7 @@ export default function Home() {
                               </span>
                               {botHtml ? (
                                 <div
-                                  className="prose prose-sm prose-zinc max-w-none overflow-hidden px-4 py-3 rounded-2xl rounded-bl-sm bg-white border border-zinc-200 shadow-sm
+                                  className="prose prose-sm prose-zinc w-full max-w-none overflow-hidden px-4 py-3 rounded-2xl rounded-bl-sm bg-white border border-zinc-200 shadow-sm
                                   prose-p:text-zinc-700 prose-p:leading-relaxed prose-p:my-1.5
                                   prose-headings:font-semibold prose-headings:text-zinc-800
                                   prose-strong:text-zinc-800 prose-strong:font-semibold
@@ -720,7 +720,7 @@ export default function Home() {
                       <span className="text-xs text-zinc-400 px-1">{isUser ? "Tú" : "Bot (Simulador)"}</span>
                       {botHtml ? (
                         <div
-                          className="prose prose-sm prose-zinc max-w-none overflow-hidden px-4 py-3 rounded-2xl rounded-bl-sm bg-white border border-zinc-200 shadow-sm
+                          className="prose prose-sm prose-zinc w-full max-w-none overflow-hidden px-4 py-3 rounded-2xl rounded-bl-sm bg-white border border-zinc-200 shadow-sm
                           prose-p:text-zinc-700 prose-p:leading-relaxed prose-p:my-1.5
                           prose-headings:font-semibold prose-headings:text-zinc-800
                           prose-strong:text-zinc-800 prose-strong:font-semibold
