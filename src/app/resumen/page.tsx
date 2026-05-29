@@ -61,33 +61,30 @@ function formatDate(dateStr: string): string {
   });
 }
 
+function getUrlParams() {
+  if (typeof window === "undefined") return { chat: null, fecha: null };
+  const p = new URLSearchParams(window.location.search);
+  return { chat: p.get("chat"), fecha: p.get("fecha") };
+}
+
 export default function ResumenPage() {
-  const [chat, setChat] = useState<string | null>(null);
-  const [fecha, setFecha] = useState<string | null>(null);
+  const [{ chat, fecha }] = useState(getUrlParams);
   const [messages, setMessages] = useState<Message[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(!!(chat && fecha));
+  const [error, setError] = useState<string | null>(
+    !chat || !fecha ? "URL inválida. Se requieren los parámetros ?chat=... y &fecha=..." : null
+  );
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const chatId = params.get("chat");
-    const fechaParam = params.get("fecha");
-    setChat(chatId);
-    setFecha(fechaParam);
+    if (!chat || !fecha) return;
 
-    if (!chatId || !fechaParam) {
-      setError("URL inválida. Se requieren los parámetros ?chat=... y &fecha=...");
-      setLoading(false);
-      return;
-    }
-
-    fetch(`${API_BASE}/chat/user/${chatId}`)
+    fetch(`${API_BASE}/chat/user/${chat}`)
       .then((r) => r.json())
       .then((data: UserChatResponse) => {
         if (data.success) {
           const filtered = data.messages.filter((m) =>
-            m.created_at ? m.created_at.startsWith(fechaParam) : true
+            m.created_at ? m.created_at.startsWith(fecha) : true
           );
           setMessages(filtered);
         } else {
@@ -96,7 +93,7 @@ export default function ResumenPage() {
       })
       .catch(() => setError("No se pudo conectar con la API."))
       .finally(() => setLoading(false));
-  }, []);
+  }, [chat, fecha]);
 
   function buildPlainText(): string {
     if (!chat || !fecha) return "";
