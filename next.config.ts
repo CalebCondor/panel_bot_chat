@@ -5,7 +5,7 @@ const nextConfig: NextConfig = {
     return [
       {
         source: "/api/proxy/:path*",
-        destination: "https://agente.apidoctorrecetas.com/api/:path*",
+        destination: "https://app.apidoctorrecetas.com/api/:path*",
       },
     ];
   },

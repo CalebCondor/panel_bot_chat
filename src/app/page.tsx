@@ -136,7 +136,7 @@ export default function Home() {
 
   const loadKnowledge = useCallback(() => {
     setLoadingKnowledge(true);
-    fetch("https://agente.apidoctorrecetas.com/api/chat/conocimiento")
+    fetch(`${API_BASE}/chat/conocimiento`)
       .then(r => r.json())
       .then(data => {
         if (Array.isArray(data)) setKnowledgeList(data);
@@ -157,7 +157,7 @@ export default function Home() {
     if (!newPregunta.trim() || !newRespuesta.trim()) return;
     setSavingKnowledge(true);
     try {
-      const res = await fetch("https://agente.apidoctorrecetas.com/api/chat/conocimiento", {
+      const res = await fetch(`${API_BASE}/chat/conocimiento`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -193,7 +193,7 @@ export default function Home() {
     });
 
   useEffect(() => {
-    fetch(`https://agente.apidoctorrecetas.com/api/chat/users`)
+    fetch(`${API_BASE}/chat/users`)
       .then((r) => r.json())
       .then((data: UsersResponse) => {
         if (data.success) setUserIds(data.user_ids);
@@ -206,7 +206,7 @@ export default function Home() {
   useEffect(() => {
     if (userIds.length === 0) return;
     userIds.forEach((user) => {
-      fetch(`https://agente.apidoctorrecetas.com/api/chat/user/${user.chat_id}`)
+      fetch(`${API_BASE}/chat/user/${user.chat_id}`)
         .then((r) => r.json())
         .then((data: UserChatResponse) => {
           if (!data.success) return;
@@ -237,7 +237,7 @@ export default function Home() {
     if (typeof window !== "undefined") {
       window.history.replaceState(null, "", `?chat=${encodeURIComponent(userId)}&fecha=${encodeURIComponent(fecha)}`);
     }
-    fetch(`https://agente.apidoctorrecetas.com/api/chat/user/${userId}`)
+    fetch(`${API_BASE}/chat/user/${userId}`)
       .then((r) => r.json())
       .then((data: UserChatResponse) => {
         if (data.success) {
@@ -766,7 +766,7 @@ export default function Home() {
                   }
                   const rawAnonId = anonId.replace(/[^0-9]/g, "").substring(0, 10);
 
-                  const apiUrl = "https://agente.apidoctorrecetas.com/api/chat";
+                  const apiUrl = `${API_BASE}/chat`;
                   const response = await fetch(apiUrl, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
@@ -1056,7 +1056,7 @@ export default function Home() {
           <AlertDialogFooter>
             <AlertDialogCancel disabled={deletingKey === `${confirmDelete?.chatId}|${confirmDelete?.fecha}`}>
               Cancelar
-            </AlertDialogCancel>
+            </AlertDialogCancel>  
             <AlertDialogAction
               onClick={(e) => {
                 e.preventDefault();
