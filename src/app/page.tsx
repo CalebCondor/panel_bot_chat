@@ -132,6 +132,12 @@ export default function Home() {
   const [newPregunta, setNewPregunta] = useState("");
   const [newRespuesta, setNewRespuesta] = useState("");
   const [savingKnowledge, setSavingKnowledge] = useState(false);
+  const [editingEntry, setEditingEntry] = useState<KnowledgeEntry | null>(null);
+  const [editPregunta, setEditPregunta] = useState("");
+  const [editRespuesta, setEditRespuesta] = useState("");
+  const [savingEdit, setSavingEdit] = useState(false);
+  const [deletingKnowledgeId, setDeletingKnowledgeId] = useState<number | null>(null);
+  const [confirmDeleteKnowledge, setConfirmDeleteKnowledge] = useState<KnowledgeEntry | null>(null);
   const [lastMessageTimes, setLastMessageTimes] = useState<Record<string, string>>({});
 
   const loadKnowledge = useCallback(() => {
@@ -151,6 +157,51 @@ export default function Home() {
       loadKnowledge();
     }
   }, [currentTab, loadKnowledge]);
+
+  const handleEditKnowledge = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingEntry || !editPregunta.trim() || !editRespuesta.trim()) return;
+    setSavingEdit(true);
+    try {
+      const res = await fetch(`${API_BASE}/chat/conocimiento/${editingEntry.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          pregunta: editPregunta.trim(),
+          respuesta: editRespuesta.trim()
+        })
+      });
+      if (res.ok) {
+        setEditingEntry(null);
+        loadKnowledge();
+      } else {
+        alert("Error al actualizar conocimiento");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Error de conexión");
+    } finally {
+      setSavingEdit(false);
+    }
+  };
+
+  const handleDeleteKnowledge = async (entry: KnowledgeEntry) => {
+    setDeletingKnowledgeId(entry.id);
+    try {
+      const res = await fetch(`${API_BASE}/chat/conocimiento/${entry.id}`, { method: "DELETE" });
+      if (res.ok) {
+        setConfirmDeleteKnowledge(null);
+        loadKnowledge();
+      } else {
+        alert("Error al eliminar conocimiento");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Error de conexión");
+    } finally {
+      setDeletingKnowledgeId(null);
+    }
+  };
 
   const handleAddKnowledge = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -844,6 +895,7 @@ export default function Home() {
                     <th className="px-5 py-3 font-medium w-16 text-center">ID</th>
                     <th className="px-5 py-3 font-medium w-1/3">Pregunta</th>
                     <th className="px-5 py-3 font-medium">Respuesta</th>
+                    <th className="px-5 py-3 font-medium w-24 text-center">Acciones</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-zinc-100">
@@ -865,6 +917,33 @@ export default function Home() {
                         <td className="px-5 py-4 text-center text-zinc-400 font-medium">#{k.id}</td>
                         <td className="px-5 py-4 text-zinc-800 font-medium align-top leading-relaxed">{k.pregunta}</td>
                         <td className="px-5 py-4 text-zinc-600 align-top leading-relaxed">{k.respuesta}</td>
+                        <td className="px-5 py-4 text-center">
+                          <div className="flex items-center justify-center gap-2">
+                            <button
+                              onClick={() => { setEditingEntry(k); setEditPregunta(k.pregunta); setEditRespuesta(k.respuesta); }}
+                              className="p-1.5 rounded-lg hover:bg-blue-50 text-zinc-400 hover:text-blue-600 transition-colors"
+                              title="Editar"
+                            >
+                              <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 20 20" fill="currentColor">
+                                <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+                              </svg>
+                            </button>
+                            <button
+                              onClick={() => setConfirmDeleteKnowledge(k)}
+                              disabled={deletingKnowledgeId === k.id}
+                              className="p-1.5 rounded-lg hover:bg-red-50 text-zinc-400 hover:text-red-500 transition-colors disabled:opacity-50"
+                              title="Eliminar"
+                            >
+                              {deletingKnowledgeId === k.id ? (
+                                <div className="w-4 h-4 border-2 border-red-300 border-t-red-500 rounded-full animate-spin" />
+                              ) : (
+                                <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 20 20" fill="currentColor">
+                                  <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
+                                </svg>
+                              )}
+                            </button>
+                          </div>
+                        </td>
                       </tr>
                     ))
                   )}
@@ -872,6 +951,87 @@ export default function Home() {
               </table>
             </div>
           </div>
+
+          {/* Edit Knowledge Modal */}
+          {editingEntry && (
+            <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
+              <div className="bg-white rounded-2xl shadow-xl w-full max-w-2xl overflow-hidden flex flex-col">
+                <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-100 bg-zinc-50/50">
+                  <h3 className="text-base font-semibold text-zinc-900">Editar Conocimiento #{editingEntry.id}</h3>
+                  <button onClick={() => setEditingEntry(null)} className="text-zinc-400 hover:text-zinc-600 transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                    </svg>
+                  </button>
+                </div>
+                <form onSubmit={handleEditKnowledge} className="flex flex-col p-6 gap-5">
+                  <div>
+                    <label className="block text-sm font-medium text-zinc-700 mb-2">Pregunta (Regla o Concepto)</label>
+                    <textarea
+                      value={editPregunta}
+                      onChange={e => setEditPregunta(e.target.value)}
+                      required
+                      rows={2}
+                      className="w-full rounded-xl border border-zinc-300 px-4 py-3 text-base md:text-sm text-zinc-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none resize-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-zinc-700 mb-2">Respuesta (Indicación para el Bot)</label>
+                    <textarea
+                      value={editRespuesta}
+                      onChange={e => setEditRespuesta(e.target.value)}
+                      required
+                      rows={5}
+                      className="w-full rounded-xl border border-zinc-300 px-4 py-3 text-base md:text-sm text-zinc-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none resize-none"
+                    />
+                  </div>
+                  <div className="flex flex-col sm:flex-row items-center justify-end gap-3 mt-2 border-t border-zinc-100 pt-5">
+                    <button
+                      type="button"
+                      onClick={() => setEditingEntry(null)}
+                      className="w-full sm:w-auto px-5 py-2.5 text-sm font-medium text-zinc-600 bg-white border border-zinc-200 rounded-xl hover:bg-zinc-50 transition-colors order-2 sm:order-1"
+                    >
+                      Cancelar
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={savingEdit}
+                      className="flex items-center justify-center gap-2 w-full sm:w-auto px-5 py-2.5 text-sm font-medium text-white bg-blue-600 rounded-xl hover:bg-blue-700 transition-colors disabled:opacity-50 order-1 sm:order-2"
+                    >
+                      {savingEdit && <div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />}
+                      Guardar Cambios
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          )}
+
+          {/* Confirm Delete Knowledge */}
+          {confirmDeleteKnowledge && (
+            <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
+              <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm p-6 flex flex-col gap-4">
+                <h3 className="text-base font-semibold text-zinc-900">¿Eliminar este conocimiento?</h3>
+                <p className="text-sm text-zinc-600 line-clamp-3">{confirmDeleteKnowledge.pregunta}</p>
+                <div className="flex gap-3 justify-end">
+                  <button
+                    onClick={() => setConfirmDeleteKnowledge(null)}
+                    className="px-4 py-2 text-sm font-medium text-zinc-600 bg-white border border-zinc-200 rounded-xl hover:bg-zinc-50 transition-colors"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    onClick={() => handleDeleteKnowledge(confirmDeleteKnowledge)}
+                    disabled={deletingKnowledgeId === confirmDeleteKnowledge.id}
+                    className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-xl hover:bg-red-700 transition-colors disabled:opacity-50"
+                  >
+                    {deletingKnowledgeId === confirmDeleteKnowledge.id && <div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />}
+                    Eliminar
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Add Knowledge Modal */}
           {showKnowledgeModal && (
