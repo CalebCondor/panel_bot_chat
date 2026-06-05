@@ -454,7 +454,7 @@ export default function Home() {
         </div>
         <div className="min-w-0">
           <h1 className="text-base font-semibold text-zinc-900 leading-tight truncate">
-            Islamed
+            Bwell - Agente IA
           </h1>
           <p className="text-xs text-zinc-500">Panel de conversaciones</p>
         </div>
