@@ -120,7 +120,7 @@ export default function Home() {
   const chatTopRef = useRef<HTMLDivElement>(null);
   const urlParamsHandled = useRef(false);
   const [linkCopied, setLinkCopied] = useState(false);
-  const [currentTab, setCurrentTab] = useState<"conversaciones" | "chat" | "aprendizaje">("conversaciones");
+  const [currentTab, setCurrentTab] = useState<"conversaciones" | "chat" | "aprendizaje" | "prompt">("conversaciones");
   const [simMessages, setSimMessages] = useState<{ role: "user" | "bot", text: string }[]>([
     { role: "bot", text: "¡Hola! Soy el agente Islamed. ¿En qué te puedo ayudar hoy?" }
   ]);
@@ -139,6 +139,10 @@ export default function Home() {
   const [deletingKnowledgeId, setDeletingKnowledgeId] = useState<number | null>(null);
   const [confirmDeleteKnowledge, setConfirmDeleteKnowledge] = useState<KnowledgeEntry | null>(null);
   const [lastMessageTimes, setLastMessageTimes] = useState<Record<string, string>>({});
+  const [promptValue, setPromptValue] = useState("");
+  const [loadingPrompt, setLoadingPrompt] = useState(false);
+  const [savingPrompt, setSavingPrompt] = useState(false);
+  const [promptSaved, setPromptSaved] = useState(false);
 
   const loadKnowledge = useCallback(() => {
     setLoadingKnowledge(true);
@@ -155,6 +159,17 @@ export default function Home() {
   useEffect(() => {
     if (currentTab === "aprendizaje") {
       loadKnowledge();
+    }
+    if (currentTab === "prompt") {
+      setLoadingPrompt(true);
+      fetch(`${API_BASE}/chat/config/system_prompt_base`)
+        .then(r => r.json())
+        .then(data => {
+          const val = data?.valor ?? data?.value ?? data?.data?.valor ?? "";
+          setPromptValue(val);
+        })
+        .catch(console.error)
+        .finally(() => setLoadingPrompt(false));
     }
   }, [currentTab, loadKnowledge]);
 
@@ -482,6 +497,12 @@ export default function Home() {
           className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap mt-1 ${currentTab === "aprendizaje" ? "border-emerald-500 text-emerald-600" : "border-transparent text-zinc-500 hover:text-zinc-700 hover:border-zinc-300"}`}
         >
           Aprendizaje
+        </button>
+        <button
+          onClick={() => setCurrentTab("prompt")}
+          className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap mt-1 ${currentTab === "prompt" ? "border-emerald-500 text-emerald-600" : "border-transparent text-zinc-500 hover:text-zinc-700 hover:border-zinc-300"}`}
+        >
+          Prompt IA
         </button>
       </div>
 
@@ -1097,6 +1118,87 @@ export default function Home() {
         </div>
       )}
 
+
+      {currentTab === "prompt" && (
+        <div className="flex flex-1 flex-col bg-zinc-50 overflow-hidden">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between px-4 md:px-6 py-4 bg-white border-b border-zinc-200 shrink-0 gap-3">
+            <div>
+              <h2 className="text-lg font-semibold text-zinc-800">Prompt del Sistema</h2>
+              <p className="text-xs text-zinc-500">Instrucciones base que guían el comportamiento del agente IA.</p>
+            </div>
+          </div>
+
+          <div className="flex-1 overflow-y-auto p-4 md:p-6">
+            <div className="max-w-4xl mx-auto">
+              {loadingPrompt ? (
+                <div className="flex items-center justify-center py-20 text-zinc-400 text-sm">
+                  Cargando prompt…
+                </div>
+              ) : (
+                <form
+                  onSubmit={async (e) => {
+                    e.preventDefault();
+                    setSavingPrompt(true);
+                    setPromptSaved(false);
+                    try {
+                      const res = await fetch(`${API_BASE}/chat/config/system_prompt_base`, {
+                        method: "PUT",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ valor: promptValue }),
+                      });
+                      if (res.ok) {
+                        setPromptSaved(true);
+                        setTimeout(() => setPromptSaved(false), 3000);
+                      } else {
+                        alert("Error al guardar el prompt");
+                      }
+                    } catch (err) {
+                      console.error(err);
+                      alert("Error de conexión");
+                    } finally {
+                      setSavingPrompt(false);
+                    }
+                  }}
+                  className="flex flex-col gap-4"
+                >
+                  <div className="bg-white border border-zinc-200 rounded-2xl shadow-sm overflow-hidden">
+                    <div className="flex items-center justify-between px-5 py-3 border-b border-zinc-100 bg-zinc-50">
+                      <span className="text-xs font-medium text-zinc-500 uppercase tracking-wide">system_prompt_base</span>
+                      <span className="text-xs text-zinc-400">{promptValue.length} caracteres</span>
+                    </div>
+                    <textarea
+                      value={promptValue}
+                      onChange={e => setPromptValue(e.target.value)}
+                      rows={20}
+                      className="w-full px-5 py-4 text-sm text-zinc-900 font-mono leading-relaxed resize-none outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-inset"
+                      placeholder="Escribe aquí las instrucciones del sistema para el agente…"
+                    />
+                  </div>
+
+                  <div className="flex items-center justify-end gap-3">
+                    {promptSaved && (
+                      <span className="flex items-center gap-1.5 text-sm text-emerald-600 font-medium">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 20 20" fill="currentColor">
+                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                        </svg>
+                        Guardado
+                      </span>
+                    )}
+                    <button
+                      type="submit"
+                      disabled={savingPrompt}
+                      className="flex items-center gap-2 px-5 py-2.5 text-sm font-medium text-white bg-emerald-600 rounded-xl hover:bg-emerald-700 transition-colors disabled:opacity-50 shadow-sm"
+                    >
+                      {savingPrompt && <div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />}
+                      Guardar Prompt
+                    </button>
+                  </div>
+                </form>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Summary Modal */}
       {showSummary && (() => {
