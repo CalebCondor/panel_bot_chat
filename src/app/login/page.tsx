@@ -44,10 +44,10 @@ export default function LoginPage() {
             </svg>
           </div>
           <h1 className="text-2xl font-bold text-gray-800 dark:text-white tracking-tight">
-            Islamed
+            BWell
           </h1>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-            Panel de administración
+            Panel de administración · Agente IA
           </p>
         </div>
 
@@ -109,7 +109,7 @@ export default function LoginPage() {
         </div>
 
         <p className="text-center text-xs text-gray-400 mt-6">
-          © {new Date().getFullYear()} Islamed · Acceso restringido
+          © {new Date().getFullYear()} BWell · Acceso restringido
         </p>
       </div>
     </div>
