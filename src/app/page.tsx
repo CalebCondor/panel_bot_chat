@@ -4,16 +4,6 @@ import { useEffect, useState, useCallback, useRef, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import DOMPurify from "dompurify";
 import { marked } from "marked";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 
 const API_BASE = "/api/proxy";
 
@@ -66,7 +56,7 @@ function toPlainText(markdown: string): string {
 
 function roleLabel(role: string): string {
   if (role === "human" || role === "user") return "Usuario";
-  if (role === "ai" || role === "assistant") return "Islamed";
+  if (role === "ai" || role === "assistant") return "Dr. Recetas";
   return role;
 }
 
@@ -122,7 +112,7 @@ export default function Home() {
   const [linkCopied, setLinkCopied] = useState(false);
   const [currentTab, setCurrentTab] = useState<"conversaciones" | "chat" | "aprendizaje">("conversaciones");
   const [simMessages, setSimMessages] = useState<{ role: "user" | "bot", text: string }[]>([
-    { role: "bot", text: "¡Hola! Soy el agente Islamed. ¿En qué te puedo ayudar hoy?" }
+    { role: "bot", text: "¡Hola! Soy el simulador de Dr. Recetas. ¿En qué te puedo ayudar hoy?" }
   ]);
   const [simInput, setSimInput] = useState("");
   const [simIsLoading, setSimIsLoading] = useState(false);
@@ -132,11 +122,10 @@ export default function Home() {
   const [newPregunta, setNewPregunta] = useState("");
   const [newRespuesta, setNewRespuesta] = useState("");
   const [savingKnowledge, setSavingKnowledge] = useState(false);
-  const [lastMessageTimes, setLastMessageTimes] = useState<Record<string, string>>({});
 
   const loadKnowledge = useCallback(() => {
     setLoadingKnowledge(true);
-    fetch("https://agente.apidoctorrecetas.com/api/chat/conocimiento")
+    fetch("https://apidoctorrecetas.com/api/chat/conocimiento")
       .then(r => r.json())
       .then(data => {
         if (Array.isArray(data)) setKnowledgeList(data);
@@ -157,7 +146,7 @@ export default function Home() {
     if (!newPregunta.trim() || !newRespuesta.trim()) return;
     setSavingKnowledge(true);
     try {
-      const res = await fetch("https://agente.apidoctorrecetas.com/api/chat/conocimiento", {
+      const res = await fetch("https://apidoctorrecetas.com/api/chat/conocimiento", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -193,7 +182,7 @@ export default function Home() {
     });
 
   useEffect(() => {
-    fetch(`https://agente.apidoctorrecetas.com/api/chat/users`)
+    fetch(`${API_BASE}/chat/users`)
       .then((r) => r.json())
       .then((data: UsersResponse) => {
         if (data.success) setUserIds(data.user_ids);
@@ -202,28 +191,6 @@ export default function Home() {
       .catch(() => setErrorUsers("No se pudo conectar con la API"))
       .finally(() => setLoadingUsers(false));
   }, []);
-
-  useEffect(() => {
-    if (userIds.length === 0) return;
-    userIds.forEach((user) => {
-      fetch(`https://agente.apidoctorrecetas.com/api/chat/user/${user.chat_id}`)
-        .then((r) => r.json())
-        .then((data: UserChatResponse) => {
-          if (!data.success) return;
-          const updates: Record<string, string> = {};
-          for (const fecha of user.fechas) {
-            const last = data.messages
-              .filter((m) => m.created_at?.startsWith(fecha))
-              .reduce<string>((acc, m) => (!acc || (m.created_at ?? "") > acc ? (m.created_at ?? "") : acc), "");
-            if (last) updates[`${user.chat_id}|${fecha}`] = last;
-          }
-          if (Object.keys(updates).length > 0) {
-            setLastMessageTimes((prev) => ({ ...prev, ...updates }));
-          }
-        })
-        .catch(() => {});
-    });
-  }, [userIds]);
 
   const loadChat = useCallback((userId: string, fecha: string) => {
     setSelectedUser(userId);
@@ -237,7 +204,7 @@ export default function Home() {
     if (typeof window !== "undefined") {
       window.history.replaceState(null, "", `?chat=${encodeURIComponent(userId)}&fecha=${encodeURIComponent(fecha)}`);
     }
-    fetch(`https://agente.apidoctorrecetas.com/api/chat/user/${userId}`)
+    fetch(`${API_BASE}/chat/user/${userId}`)
       .then((r) => r.json())
       .then((data: UserChatResponse) => {
         if (data.success) {
@@ -275,11 +242,11 @@ export default function Home() {
   const deleteChat = useCallback(async (chatId: string, fecha: string) => {
     const key = `${chatId}|${fecha}`;
     setDeletingKey(key);
+    setConfirmDelete(null);
     try {
       const res = await fetch(`${API_BASE}/chat/user/${chatId}/fecha/${fecha}`, { method: "DELETE" });
       const data = await res.json();
       if (data.success) {
-        setConfirmDelete(null);
         setUserIds((prev) =>
           prev
             .map((u) =>
@@ -301,7 +268,6 @@ export default function Home() {
       }
     } finally {
       setDeletingKey(null);
-      setConfirmDelete(null);
     }
   }, [selectedUser, selectedFecha]);
 
@@ -316,17 +282,8 @@ export default function Home() {
         map[fecha].push(user);
       }
     }
-    return Object.entries(map)
-      .sort(([a], [b]) => b.localeCompare(a))
-      .map(([fecha, users]) => [
-        fecha,
-        [...users].sort((a, b) => {
-          const ta = lastMessageTimes[`${a.chat_id}|${fecha}`] ?? "";
-          const tb = lastMessageTimes[`${b.chat_id}|${fecha}`] ?? "";
-          return tb.localeCompare(ta);
-        }),
-      ] as [string, UserEntry[]]);
-  }, [userIds, searchQuery, lastMessageTimes]);
+    return Object.entries(map).sort(([a], [b]) => b.localeCompare(a));
+  }, [userIds, searchQuery]);
 
   const initializedCollapse = useRef(false);
 
@@ -340,12 +297,11 @@ export default function Home() {
     const last = dates.length > 1 ? dates[dates.length - 1].toLocaleString("es-MX", { dateStyle: "short", timeStyle: "short" }) : null;
     const lines: string[] = [
       `📋 Resumen de conversación`,
-
       `Chat ID: ${selectedUser}`,
       first ? `Inicio: ${first}` : "",
       last ? `Fin: ${last}` : "",
       `Mensajes del usuario: ${userMsgs.length}`,
-      `Respuestas del agente: ${botMsgs.length}`,
+      `Respuestas del bot: ${botMsgs.length}`,
       "",
       "─── Turnos ───",
       ...messages
@@ -363,14 +319,14 @@ export default function Home() {
 
   if (!isAuthenticated) {
     return (
-      <div className="flex items-center justify-center bg-zinc-100">
+      <div className="min-h-screen flex items-center justify-center bg-zinc-100">
         <div className="w-6 h-6 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col h-full bg-zinc-100">
+    <div className="flex flex-col h-screen bg-zinc-100">
       {/* Header */}
       <header className="flex items-center gap-3 px-4 md:px-6 py-4 bg-white border-b border-zinc-200 shrink-0 shadow-sm">
         {/* Mobile back button */}
@@ -384,11 +340,11 @@ export default function Home() {
           </button>
         )}
         <div className="flex items-center justify-center w-9 h-9 rounded-full bg-emerald-500 text-white font-bold text-sm shrink-0">
-          IS
+          DR
         </div>
         <div className="min-w-0">
           <h1 className="text-base font-semibold text-zinc-900 leading-tight truncate">
-            Islamed
+            Dr. Recetas Bot
           </h1>
           <p className="text-xs text-zinc-500">Panel de conversaciones</p>
         </div>
@@ -424,7 +380,7 @@ export default function Home() {
           onClick={() => setCurrentTab("chat")}
           className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap mt-1 ${currentTab === "chat" ? "border-emerald-500 text-emerald-600" : "border-transparent text-zinc-500 hover:text-zinc-700 hover:border-zinc-300"}`}
         >
-          Chatear con el Agente
+          Chatear con el Bot
         </button>
         <button
           onClick={() => setCurrentTab("aprendizaje")}
@@ -507,16 +463,34 @@ export default function Home() {
                             </div>
                             <span className="truncate">Conversación {idx + 1}</span>
                           </button>
-                          <button
-                            onClick={() => setConfirmDelete({ chatId: user.chat_id, fecha })}
-                            className="opacity-0 group-hover:opacity-100 mr-2 p-1.5 rounded hover:bg-red-50 text-zinc-400 hover:text-red-500 transition-opacity shrink-0"
-                            aria-label="Eliminar"
-                            title={`Eliminar mensajes del ${fecha}`}
-                          >
-                            <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" viewBox="0 0 20 20" fill="currentColor">
-                              <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
-                            </svg>
-                          </button>
+                          {confirmDelete?.chatId === user.chat_id && confirmDelete?.fecha === fecha ? (
+                            <div className="flex items-center gap-1 pr-2 shrink-0">
+                              <button
+                                onClick={() => deleteChat(user.chat_id, fecha)}
+                                disabled={deletingKey === `${user.chat_id}|${fecha}`}
+                                className="text-xs px-2 py-1 rounded bg-red-500 text-white hover:bg-red-600 disabled:opacity-50"
+                              >
+                                {deletingKey === `${user.chat_id}|${fecha}` ? "…" : "Sí"}
+                              </button>
+                              <button
+                                onClick={() => setConfirmDelete(null)}
+                                className="text-xs px-2 py-1 rounded bg-zinc-200 text-zinc-700 hover:bg-zinc-300"
+                              >
+                                No
+                              </button>
+                            </div>
+                          ) : (
+                            <button
+                              onClick={() => setConfirmDelete({ chatId: user.chat_id, fecha })}
+                              className="opacity-0 group-hover:opacity-100 mr-2 p-1.5 rounded hover:bg-red-50 text-zinc-400 hover:text-red-500 transition-opacity shrink-0"
+                              aria-label="Eliminar"
+                              title={`Eliminar mensajes del ${fecha}`}
+                            >
+                              <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" viewBox="0 0 20 20" fill="currentColor">
+                                <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
+                              </svg>
+                            </button>
+                          )}
                         </div>
                       ))}
                     </div>
@@ -545,11 +519,11 @@ export default function Home() {
                   <div className="flex items-center justify-center w-8 h-8 rounded-full bg-emerald-100 text-emerald-700 text-xs font-bold shrink-0">
                     {String(selectedUser).slice(-2)}
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-zinc-900 truncate">
+                  <div>
+                    <p className="text-sm font-semibold text-zinc-900">
                       Usuario {selectedUser}
                     </p>
-                    <p className="text-xs text-zinc-500 truncate">
+                    <p className="text-xs text-zinc-500">
                       {selectedFecha ? formatDate(selectedFecha) : ""}
                       {!loadingChat && ` · ${totalMessages} mensaje${totalMessages !== 1 ? "s" : ""}`}
                     </p>
@@ -583,7 +557,7 @@ export default function Home() {
                         <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" viewBox="0 0 20 20" fill="currentColor">
                           <path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clipRule="evenodd" />
                         </svg>
-                        <span className="hidden sm:inline">Resumen</span>
+                        Resumen
                       </button>
                     </div>
                   )}
@@ -625,7 +599,7 @@ export default function Home() {
                             className={`flex ${isUser ? "justify-end" : "justify-start"}`}
                           >
                             <div
-                              className={`max-w-[85%] md:max-w-[75%] min-w-0 flex flex-col gap-1 ${isUser ? "items-end" : "items-start"
+                              className={`max-w-[85%] md:max-w-[75%] flex flex-col gap-1 ${isUser ? "items-end" : "items-start"
                                 }`}
                             >
                               <span className="text-xs text-zinc-400 px-1">
@@ -633,7 +607,7 @@ export default function Home() {
                               </span>
                               {botHtml ? (
                                 <div
-                                  className="prose prose-sm prose-zinc w-full max-w-none overflow-hidden px-4 py-3 rounded-2xl rounded-bl-sm bg-white border border-zinc-200 shadow-sm
+                                  className="prose prose-sm prose-zinc max-w-none px-4 py-3 rounded-2xl rounded-bl-sm bg-white border border-zinc-200 shadow-sm
                                   prose-p:text-zinc-700 prose-p:leading-relaxed prose-p:my-1.5
                                   prose-headings:font-semibold prose-headings:text-zinc-800
                                   prose-strong:text-zinc-800 prose-strong:font-semibold
@@ -682,12 +656,12 @@ export default function Home() {
           <div className="flex flex-col sm:flex-row sm:items-center justify-between px-4 md:px-6 py-4 bg-white border-b border-zinc-200 shrink-0 gap-3">
             <div>
               <h2 className="text-lg font-semibold text-zinc-800">Simulador de Chat</h2>
-              <p className="text-xs text-zinc-500">Prueba cómo responde el agente en tiempo real.</p>
+              <p className="text-xs text-zinc-500">Prueba cómo responde tu bot en tiempo real.</p>
             </div>
             <button
               onClick={() => {
                 setSimMessages([
-                  { role: "bot", text: "¡Hola! Soy el agente Islamed. ¿En qué te puedo ayudar hoy?" }
+                  { role: "bot", text: "¡Hola! Soy el simulador de Dr. Recetas. ¿En qué te puedo ayudar hoy?" }
                 ]);
                 localStorage.removeItem("dr-recetas-sim-id");
                 setSimInput("");
@@ -709,11 +683,11 @@ export default function Home() {
                 const botHtml = !isUser ? DOMPurify.sanitize(marked.parse(msg.text) as string) : null;
                 return (
                   <div key={i} className={`flex ${isUser ? "justify-end" : "justify-start"}`}>
-                    <div className={`max-w-[85%] md:max-w-[75%] min-w-0 flex flex-col gap-1 ${isUser ? "items-end" : "items-start"}`}>
+                    <div className={`max-w-[85%] md:max-w-[75%] flex flex-col gap-1 ${isUser ? "items-end" : "items-start"}`}>
                       <span className="text-xs text-zinc-400 px-1">{isUser ? "Tú" : "Bot (Simulador)"}</span>
                       {botHtml ? (
                         <div
-                          className="prose prose-sm prose-zinc w-full max-w-none overflow-hidden px-4 py-3 rounded-2xl rounded-bl-sm bg-white border border-zinc-200 shadow-sm
+                          className="prose prose-sm prose-zinc max-w-none px-4 py-3 rounded-2xl rounded-bl-sm bg-white border border-zinc-200 shadow-sm
                           prose-p:text-zinc-700 prose-p:leading-relaxed prose-p:my-1.5
                           prose-headings:font-semibold prose-headings:text-zinc-800
                           prose-strong:text-zinc-800 prose-strong:font-semibold
@@ -766,7 +740,7 @@ export default function Home() {
                   }
                   const rawAnonId = anonId.replace(/[^0-9]/g, "").substring(0, 10);
 
-                  const apiUrl = "https://agente.apidoctorrecetas.com/api/chat";
+                  const apiUrl = "https://apidoctorrecetas.com/api/chat";
                   const response = await fetch(apiUrl, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
@@ -799,7 +773,7 @@ export default function Home() {
                 }}
                 disabled={simIsLoading}
                 placeholder="Escribe un mensaje..."
-                className="flex-1 max-h-32 min-h-11 resize-none overflow-y-auto rounded-xl border border-zinc-300 bg-white px-4 py-2.5 text-base md:text-sm text-zinc-900 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 outline-none disabled:bg-zinc-50 disabled:text-zinc-400"
+                className="flex-1 max-h-32 min-h-[44px] resize-none overflow-y-auto rounded-xl border border-zinc-300 bg-white px-4 py-2.5 text-base md:text-sm text-zinc-900 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 outline-none disabled:bg-zinc-50 disabled:text-zinc-400"
                 rows={1}
               />
               <button
@@ -838,7 +812,7 @@ export default function Home() {
           {/* Main content table */}
           <div className="flex-1 overflow-y-auto w-full max-w-7xl mx-auto p-4 md:p-6">
             <div className="bg-white border border-zinc-200 rounded-2xl shadow-sm overflow-hidden overflow-x-auto">
-              <table className="w-full text-left border-collapse text-sm min-w-150">
+              <table className="w-full text-left border-collapse text-sm min-w-[600px]">
                 <thead className="bg-zinc-50 border-b border-zinc-200 text-zinc-500">
                   <tr>
                     <th className="px-5 py-3 font-medium w-16 text-center">ID</th>
@@ -1042,36 +1016,6 @@ export default function Home() {
           </div>
         );
       })()}
-
-      <AlertDialog open={!!confirmDelete} onOpenChange={(open) => !open && setConfirmDelete(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>¿Eliminar mensajes?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Esta acción eliminará permanentemente todos los mensajes del día{" "}
-              <span className="font-semibold text-zinc-900">{confirmDelete?.fecha}</span> de este usuario.
-              Esta acción no se puede deshacer.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={deletingKey === `${confirmDelete?.chatId}|${confirmDelete?.fecha}`}>
-              Cancelar
-            </AlertDialogCancel>
-            <AlertDialogAction
-              onClick={(e) => {
-                e.preventDefault();
-                if (confirmDelete) {
-                  deleteChat(confirmDelete.chatId, confirmDelete.fecha);
-                }
-              }}
-              className="bg-red-500 hover:bg-red-600 text-white"
-              disabled={deletingKey === `${confirmDelete?.chatId}|${confirmDelete?.fecha}`}
-            >
-              {deletingKey === `${confirmDelete?.chatId}|${confirmDelete?.fecha}` ? "Eliminando..." : "Eliminar"}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </div>
   );
 }
