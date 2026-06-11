@@ -89,6 +89,7 @@ type UserChatResponse = { success: boolean; chat_id: number; total: number; mess
 // ─── Utilities ────────────────────────────────────────────────────────────────
 function extractText(content: Message["content"]): string {
   if (typeof content === "string") return content;
+  
   if (Array.isArray(content)) return content.map(b => typeof b.text === "string" ? b.text : "").join("");
   if (typeof content === "object" && content !== null) return typeof content.text === "string" ? content.text : JSON.stringify(content);
   return "";
