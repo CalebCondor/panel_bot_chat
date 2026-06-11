@@ -163,6 +163,7 @@ export default function Home() {
   const [confirmDelete, setConfirmDelete] = useState<{ chatId: string; fecha: string } | null>(null);
   const [selectedFecha, setSelectedFecha] = useState<string | null>(null);
   const [linkCopied, setLinkCopied] = useState(false);
+  
   const chatTopRef = useRef<HTMLDivElement>(null);
   const urlParamsHandled = useRef(false);
 
