@@ -372,37 +372,22 @@ export default function Home() {
   return (
     <div className="flex flex-col h-full bg-zinc-100">
       {/* Header */}
-      <header className="flex items-center gap-3 px-4 md:px-6 py-4 bg-white border-b border-zinc-200 shrink-0 shadow-sm">
-        {/* Mobile back button */}
-        {selectedUser !== null && !showSidebar && (
-          <button
-            onClick={() => setShowSidebar(true)}
-            className="flex items-center justify-center w-8 h-8 rounded-full hover:bg-zinc-100 text-zinc-500 md:hidden shrink-0"
-            aria-label="Volver"
-          >
-            &#8592;
-          </button>
+        <header className="flex items-center gap-3 px-4 md:px-6 py-3 bg-white border-b border-slate-200 shrink-0 shadow-sm z-10">
+        <div className="flex items-center gap-3">
+          {/* Logo */}
+          <img
+            src="https://islandmedpr.com/assets/images/logo-islandmed.png"
+            alt="Doctor Recetas"
+            className="h-9 w-auto object-contain select-none"
+          />
+        </div>
+        {!loadingUsers && (
+          <div className="hidden md:flex items-center gap-2 ml-4">
+          </div>
         )}
-        <div className="flex items-center justify-center w-9 h-9 rounded-full bg-emerald-500 text-white font-bold text-sm shrink-0">
-          IS
-        </div>
-        <div className="min-w-0">
-          <h1 className="text-base font-semibold text-zinc-900 leading-tight truncate">
-            Islamed
-          </h1>
-          <p className="text-xs text-zinc-500">Panel de conversaciones</p>
-        </div>
-        <div className="ml-auto flex items-center gap-2 shrink-0">
-          {!loadingUsers && (
-            <span className="text-xs text-zinc-500 bg-zinc-100 px-3 py-1 rounded-full border border-zinc-200 hidden sm:inline">
-              {userIds.length} Chats
-            </span>
-          )}
-          <button
-            onClick={handleLogout}
-            title="Cerrar sesión"
-            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-zinc-500 hover:text-red-600 hover:bg-red-50 border border-zinc-200 hover:border-red-200 rounded-lg transition-colors"
-          >
+        <div className="ml-auto">
+          <button onClick={handleLogout}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-slate-500 hover:text-red-600 hover:bg-red-50 border border-slate-200 hover:border-red-200 rounded-lg transition-colors">
             <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" viewBox="0 0 20 20" fill="currentColor">
               <path fillRule="evenodd" d="M3 3a1 1 0 00-1 1v12a1 1 0 001 1h7a1 1 0 100-2H4V5h6a1 1 0 100-2H3zm11.707 4.293a1 1 0 010 1.414L13.414 10l1.293 1.293a1 1 0 01-1.414 1.414l-2-2a1 1 0 010-1.414l2-2a1 1 0 011.414 0z" clipRule="evenodd" />
               <path fillRule="evenodd" d="M13 10a1 1 0 011-1h4a1 1 0 110 2h-4a1 1 0 01-1-1z" clipRule="evenodd" />
