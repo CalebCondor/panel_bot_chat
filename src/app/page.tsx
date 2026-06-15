@@ -908,6 +908,7 @@ export default function Home() {
                             )}
                             <div className={`max-w-[80%] md:max-w-[70%] flex flex-col gap-1 ${isUser ? "items-end" : "items-start"}`}>
                               {botHtml ? (
+                                
                                 <div
                                   className="prose prose-sm prose-slate max-w-none px-4 py-3 rounded-2xl rounded-bl-sm bg-white border border-slate-200 shadow-sm
                                     prose-p:text-slate-700 prose-p:leading-relaxed prose-p:my-1.5
