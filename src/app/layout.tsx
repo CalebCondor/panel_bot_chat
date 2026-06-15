@@ -13,8 +13,8 @@ const poppins = Poppins({
 });
 
 export const metadata: Metadata = {
-  title: "Islamed — Panel",
-  description: "Panel de conversaciones del agente Islamed",
+  title: "Tetra — Panel",
+  description: "Panel de conversaciones del agente Tetra",
 };
 
 export default function RootLayout({
