@@ -904,7 +904,7 @@ export default function Home() {
                         return (
                           <div key={i} className={`flex items-end gap-2.5 ${isUser ? "justify-end" : "justify-start"}`}>
                             {!isUser && (
-                              <div className="w-7 h-7 rounded-full bg-gradient-to-br from-blue-500 to-blue-700 text-white text-[10px] font-bold flex items-center justify-center shrink-0 mb-0.5 shadow-sm">DR</div>
+                              <div className="w-7 h-7 rounded-full bg-gradient-to-br from-blue-500 to-blue-700 text-white text-[10px] font-bold flex items-center justify-center shrink-0 mb-0.5 shadow-sm">TR</div>
                             )}
                             <div className={`max-w-[80%] md:max-w-[70%] flex flex-col gap-1 ${isUser ? "items-end" : "items-start"}`}>
                               {botHtml ? (
