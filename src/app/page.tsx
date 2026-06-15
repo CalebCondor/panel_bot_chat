@@ -908,7 +908,7 @@ export default function Home() {
                             )}
                             <div className={`max-w-[80%] md:max-w-[70%] flex flex-col gap-1 ${isUser ? "items-end" : "items-start"}`}>
                               {botHtml ? (
-                                
+
                                 <div
                                   className="prose prose-sm prose-slate max-w-none px-4 py-3 rounded-2xl rounded-bl-sm bg-white border border-slate-200 shadow-sm
                                     prose-p:text-slate-700 prose-p:leading-relaxed prose-p:my-1.5
@@ -1130,7 +1130,7 @@ export default function Home() {
       {/* ── Footer ── */}
       <footer className="shrink-0 bg-white border-t border-slate-200 py-2.5">
         <p className="text-center text-[11px] text-slate-400">
-          <span className="font-semibold text-[#075aa3]">Islanmed</span>
+          <span className="font-semibold text-[#075aa3]">Tetra</span>
           <span className="mx-1.5 text-slate-300">·</span>
           Agente IA · Panel CRM
           <span className="mx-2 text-slate-300">|</span>
