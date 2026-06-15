@@ -59,10 +59,10 @@ function MiniCalendar({
               key={i}
               onClick={() => hasChats && onSelect(isSel ? null : ds)}
               className={`relative mx-auto w-8 h-8 flex flex-col items-center justify-center rounded-lg text-xs font-medium transition-all
-                ${isSel ? "bg-[#467173] text-white shadow-sm" : isToday && hasChats ? "bg-[#F2FAEC] text-[#467173] ring-1 ring-[#D9EFB5]" : isToday ? "bg-[#F2FAEC] text-slate-500 ring-1 ring-slate-200" : hasChats ? "text-slate-800 hover:bg-[#D9EFB5] hover:text-[#467173]" : "text-slate-300 cursor-default"}`}
+                ${isSel ? "bg-[#075aa3] text-white shadow-sm" : isToday && hasChats ? "bg-[#EFF6FF] text-[#075aa3] ring-1 ring-[#BFDBFE]" : isToday ? "bg-[#EFF6FF] text-slate-500 ring-1 ring-slate-200" : hasChats ? "text-slate-800 hover:bg-[#BFDBFE] hover:text-[#075aa3]" : "text-slate-300 cursor-default"}`}
             >
               {day}
-              {hasChats && !isSel && <span className="absolute bottom-0.5 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-[#467173]" />}
+              {hasChats && !isSel && <span className="absolute bottom-0.5 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-[#075aa3]" />}
             </button>
           );
         })} 
@@ -324,7 +324,7 @@ export default function Home() {
   // ── Knowledge ──
   const loadKnowledge = useCallback(() => {
     setLoadingKnowledge(true);
-    fetch("https://agente.apidoctorrecetas.com/api/chat/conocimiento")
+    fetch("https://tetra.apidoctorrecetas.com/api/chat/conocimiento")
       .then(r => r.json())
       .then(data => {
         if (Array.isArray(data)) setKnowledgeList(data);
@@ -343,7 +343,7 @@ export default function Home() {
     if (!newPregunta.trim() || !newRespuesta.trim()) return;
     setSavingKnowledge(true);
     try {
-      const res = await fetch("https://agente.apidoctorrecetas.com/api/chat/conocimiento", {
+      const res = await fetch("https://tetra.apidoctorrecetas.com/api/chat/conocimiento", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ pregunta: newPregunta.trim(), respuesta: newRespuesta.trim() }),
@@ -454,7 +454,7 @@ export default function Home() {
   if (!isAuthenticated) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-100">
-        <div className="w-6 h-6 border-2 border-[#467173] border-t-transparent rounded-full animate-spin" />
+        <div className="w-6 h-6 border-2 border-[#075aa3] border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
@@ -467,16 +467,16 @@ export default function Home() {
       <div
         key={delKey}
         className={`group flex items-center border-b border-slate-100 transition-colors
-          ${isActive ? "bg-[#F2FAEC] border-l-[3px] border-l-emerald-500" : "hover:bg-[#F2FAEC] border-l-[3px] border-l-transparent"}`}
+          ${isActive ? "bg-[#EFF6FF] border-l-[3px] border-l-[#075aa3]" : "hover:bg-[#EFF6FF] border-l-[3px] border-l-transparent"}`}
       >
         <button onClick={() => loadChat(entry.chatId, entry.fecha)} className="flex items-center gap-3 flex-1 min-w-0 px-4 py-3.5 text-left">
           <div className={`flex items-center justify-center w-9 h-9 rounded-xl text-xs font-bold shrink-0
-            ${isActive ? "bg-[#467173] text-white shadow-sm shadow-[#D9EFB5]" : "bg-gradient-to-br from-slate-100 to-slate-200 text-slate-600"}`}>
+            ${isActive ? "bg-[#075aa3] text-white shadow-sm shadow-[#BFDBFE]" : "bg-gradient-to-br from-slate-100 to-slate-200 text-slate-600"}`}>
             {entry.idx}
           </div>
           <div className="min-w-0 flex-1">
             <div className="flex items-center justify-between gap-1">
-              <p className={`text-sm font-semibold truncate ${isActive ? "text-[#2d4f51]" : "text-slate-800"}`}>
+              <p className={`text-sm font-semibold truncate ${isActive ? "text-[#0a3d6e]" : "text-slate-800"}`}>
                 Conversación {entry.idx}
               </p>
               {showDate && <span className="text-[10px] text-slate-400 shrink-0">{formatDateShort(entry.fecha)}</span>}
@@ -508,13 +508,13 @@ export default function Home() {
   };
 
   return (
-    <div className="flex flex-col h-screen bg-[#F2FAEC]">
+    <div className="flex flex-col h-screen bg-[#EFF6FF]">
       {/* ── Header ── */}
-      <header className="flex items-center gap-3 px-4 md:px-6 py-3 bg-white border-b border-slate-200 shrink-0 shadow-sm z-10">
+      <header className="flex items-center gap-3 px-4 md:px-6 py-3 bg-[#075aa3] border-b border-blue-700 shrink-0 shadow-sm z-10">
         <div className="flex items-center gap-3">
           {/* Logo */}
           <img
-            src="https://islandmedpr.com/assets/images/logo-islandmed.png"
+            src="https://tetrapr.com/wp-content/uploads/2024/10/Logo_TETRA-White.svg"
             alt="Islandmed"
             className="h-9 w-auto object-contain select-none"
           />
@@ -525,7 +525,7 @@ export default function Home() {
         )}
         <div className="ml-auto">
           <button onClick={handleLogout}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-slate-500 hover:text-red-600 hover:bg-red-50 border border-slate-200 hover:border-red-200 rounded-lg transition-colors">
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-slate-500 bg-white hover:text-red-600 hover:bg-red-50 border border-slate-200 hover:border-red-200 rounded-lg transition-colors">
             <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" viewBox="0 0 20 20" fill="currentColor">
               <path fillRule="evenodd" d="M3 3a1 1 0 00-1 1v12a1 1 0 001 1h7a1 1 0 100-2H4V5h6a1 1 0 100-2H3zm11.707 4.293a1 1 0 010 1.414L13.414 10l1.293 1.293a1 1 0 01-1.414 1.414l-2-2a1 1 0 010-1.414l2-2a1 1 0 011.414 0z" clipRule="evenodd" />
               <path fillRule="evenodd" d="M13 10a1 1 0 011-1h4a1 1 0 110 2h-4a1 1 0 01-1-1z" clipRule="evenodd" />
@@ -572,16 +572,16 @@ export default function Home() {
             onClick={() => setCurrentTab(id)}
             className={`relative flex items-center gap-2 px-6 py-3.5 text-sm font-semibold transition-all whitespace-nowrap
               ${currentTab === id
-                ? "text-[#467173] after:absolute after:bottom-0 after:left-3 after:right-3 after:h-0.5 after:bg-[#467173] after:rounded-full"
+                ? "text-[#075aa3] after:absolute after:bottom-0 after:left-3 after:right-3 after:h-0.5 after:bg-[#075aa3] after:rounded-full"
                 : "text-slate-400 hover:text-slate-600"
               }`}
           >
-            <span className={`transition-colors ${currentTab === id ? "text-[#467173]" : "text-slate-400"}`}>
+            <span className={`transition-colors ${currentTab === id ? "text-[#075aa3]" : "text-slate-400"}`}>
               {icon}
             </span>
             {label}
             {currentTab === id && (
-              <span className="absolute top-2 right-2 w-1.5 h-1.5 rounded-full bg-[#467173]" />
+              <span className="absolute top-2 right-2 w-1.5 h-1.5 rounded-full bg-[#075aa3]" />
             )}
           </button>
         ))}
@@ -613,13 +613,13 @@ export default function Home() {
             />
 
             {/* Stats */}
-            <div className="mx-3 my-2 p-3 rounded-xl bg-[#F2FAEC] border border-slate-100 space-y-2.5">
+            <div className="mx-3 my-2 p-3 rounded-xl bg-[#EFF6FF] border border-slate-100 space-y-2.5">
               <h3 className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest">Estadísticas</h3>
               {[
                 { label: "Usuarios únicos", value: userIds.length, color: "text-slate-800" },
                 { label: "Sesiones totales", value: totalConversations, color: "text-slate-800" },
                 { label: "Días con actividad", value: datesWithChats.size, color: "text-slate-800" },
-                ...(selectedCalDate ? [{ label: "Chats en fecha", value: chatListEntries.length, color: "text-[#467173]" }] : []),
+                ...(selectedCalDate ? [{ label: "Chats en fecha", value: chatListEntries.length, color: "text-[#075aa3]" }] : []),
               ].map(s => (
                 <div key={s.label} className="flex items-center justify-between">
                   <span className="text-xs text-slate-500">{s.label}</span>
@@ -633,7 +633,7 @@ export default function Home() {
               <h3 className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest px-1 mb-2 mt-1">Exportar</h3>
               {selectedCalDate && (
                 <button onClick={() => exportByDate(selectedCalDate)} disabled={exportingBulk}
-                  className="w-full flex items-center gap-2 px-3 py-2 text-xs font-medium text-[#467173] bg-[#F2FAEC] hover:bg-[#c8e49a] border border-[#D9EFB5] rounded-xl transition-colors disabled:opacity-50">
+                  className="w-full flex items-center gap-2 px-3 py-2 text-xs font-medium text-[#075aa3] bg-[#EFF6FF] hover:bg-[#93C5FD] border border-[#BFDBFE] rounded-xl transition-colors disabled:opacity-50">
                   <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5 shrink-0" viewBox="0 0 20 20" fill="currentColor">
                     <path fillRule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clipRule="evenodd" />
                   </svg>
@@ -641,7 +641,7 @@ export default function Home() {
                 </button>
               )}
               <button onClick={exportAllChats} disabled={exportingBulk}
-                className="w-full flex items-center gap-2 px-3 py-2 text-xs font-medium text-slate-600 bg-[#F2FAEC] hover:bg-slate-100 border border-slate-200 rounded-xl transition-colors disabled:opacity-50">
+                className="w-full flex items-center gap-2 px-3 py-2 text-xs font-medium text-slate-600 bg-[#EFF6FF] hover:bg-slate-100 border border-slate-200 rounded-xl transition-colors disabled:opacity-50">
                 <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5 shrink-0" viewBox="0 0 20 20" fill="currentColor">
                   <path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clipRule="evenodd" />
                 </svg>
@@ -664,7 +664,7 @@ export default function Home() {
                 <div className="flex items-center gap-2">
                   <h2 className="text-sm font-bold text-slate-800">Conversaciones</h2>
                   <span className={`text-xs font-bold px-2 py-0.5 rounded-full
-                    ${selectedCalDate ? "bg-[#D9EFB5] text-[#467173]" : "bg-slate-100 text-slate-600"}`}>
+                    ${selectedCalDate ? "bg-[#BFDBFE] text-[#075aa3]" : "bg-slate-100 text-slate-600"}`}>
                     {chatListEntries.length}
                   </span>
                 </div>
@@ -672,7 +672,7 @@ export default function Home() {
                 {/* Export dropdown */}
                 <div className="relative">
                   <button onClick={() => setExportDropdownOpen(o => !o)}
-                    className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-slate-500 hover:text-slate-700 bg-[#F2FAEC] hover:bg-slate-100 border border-slate-200 rounded-lg transition-colors">
+                    className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-slate-500 hover:text-slate-700 bg-[#EFF6FF] hover:bg-slate-100 border border-slate-200 rounded-lg transition-colors">
                     <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" viewBox="0 0 20 20" fill="currentColor">
                       <path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clipRule="evenodd" />
                     </svg>
@@ -683,8 +683,8 @@ export default function Home() {
                       <div className="fixed inset-0 z-30" onClick={() => setExportDropdownOpen(false)} />
                       <div className="absolute right-0 top-full mt-1 w-56 bg-white border border-slate-200 rounded-xl shadow-xl z-40 py-1 overflow-hidden">
                         {selectedUser && selectedFecha && (
-                          <button onClick={exportCurrentChat} className="w-full flex items-start gap-2.5 px-4 py-2.5 text-left hover:bg-[#F2FAEC] transition-colors">
-                            <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-[#467173] mt-0.5 shrink-0" viewBox="0 0 20 20" fill="currentColor">
+                          <button onClick={exportCurrentChat} className="w-full flex items-start gap-2.5 px-4 py-2.5 text-left hover:bg-[#EFF6FF] transition-colors">
+                            <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-[#075aa3] mt-0.5 shrink-0" viewBox="0 0 20 20" fill="currentColor">
                               <path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clipRule="evenodd" />
                             </svg>
                             <div>
@@ -695,7 +695,7 @@ export default function Home() {
                         )}
                         {selectedCalDate && (
                           <button onClick={() => exportByDate(selectedCalDate)} disabled={exportingBulk}
-                            className="w-full flex items-start gap-2.5 px-4 py-2.5 text-left hover:bg-[#F2FAEC] transition-colors disabled:opacity-50">
+                            className="w-full flex items-start gap-2.5 px-4 py-2.5 text-left hover:bg-[#EFF6FF] transition-colors disabled:opacity-50">
                             <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-blue-500 mt-0.5 shrink-0" viewBox="0 0 20 20" fill="currentColor">
                               <path fillRule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clipRule="evenodd" />
                             </svg>
@@ -707,7 +707,7 @@ export default function Home() {
                         )}
                         <div className="my-1 border-t border-slate-100" />
                         <button onClick={exportAllChats} disabled={exportingBulk}
-                          className="w-full flex items-start gap-2.5 px-4 py-2.5 text-left hover:bg-[#F2FAEC] transition-colors disabled:opacity-50">
+                          className="w-full flex items-start gap-2.5 px-4 py-2.5 text-left hover:bg-[#EFF6FF] transition-colors disabled:opacity-50">
                           <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-purple-500 mt-0.5 shrink-0" viewBox="0 0 20 20" fill="currentColor">
                             <path d="M7 3a1 1 0 000 2h6a1 1 0 100-2H7zM4 7a1 1 0 011-1h10a1 1 0 110 2H5a1 1 0 01-1-1zM2 11a2 2 0 012-2h12a2 2 0 012 2v4a2 2 0 01-2 2H4a2 2 0 01-2-2v-4z" />
                           </svg>
@@ -731,18 +731,18 @@ export default function Home() {
                   <path fillRule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clipRule="evenodd" />
                 </svg>
                 <input type="text" placeholder="Buscar por ID…" value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
-                  className="w-full pl-8 pr-3 py-2 text-sm rounded-lg bg-[#F2FAEC] border border-slate-200 text-slate-900 placeholder-slate-400 outline-none focus:ring-2 focus:ring-[#467173] focus:border-transparent transition" />
+                  className="w-full pl-8 pr-3 py-2 text-sm rounded-lg bg-[#EFF6FF] border border-slate-200 text-slate-900 placeholder-slate-400 outline-none focus:ring-2 focus:ring-[#075aa3] focus:border-transparent transition" />
               </div>
 
               {/* Active date filter chip */}
               {selectedCalDate && (
                 <div className="flex items-center gap-2 mt-2">
-                  <div className="flex items-center gap-1.5 px-2.5 py-1 bg-[#F2FAEC] border border-[#D9EFB5] rounded-full">
-                    <svg className="w-3 h-3 text-[#467173]" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                  <div className="flex items-center gap-1.5 px-2.5 py-1 bg-[#EFF6FF] border border-[#BFDBFE] rounded-full">
+                    <svg className="w-3 h-3 text-[#075aa3]" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                       <path fillRule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clipRule="evenodd" />
                     </svg>
-                    <span className="text-xs font-medium text-[#467173] capitalize">{formatDateShort(selectedCalDate)}</span>
-                    <button onClick={() => setSelectedCalDate(null)} className="w-3.5 h-3.5 flex items-center justify-center rounded-full hover:bg-emerald-200 text-[#467173] font-bold text-xs leading-none transition-colors">×</button>
+                    <span className="text-xs font-medium text-[#075aa3] capitalize">{formatDateShort(selectedCalDate)}</span>
+                    <button onClick={() => setSelectedCalDate(null)} className="w-3.5 h-3.5 flex items-center justify-center rounded-full hover:bg-blue-500 text-[#075aa3] font-bold text-xs leading-none transition-colors">×</button>
                   </div>
                 </div>
               )}
@@ -752,7 +752,7 @@ export default function Home() {
             <div className="flex-1 overflow-y-auto">
               {loadingUsers ? (
                 <div className="flex flex-col items-center justify-center py-16 gap-3 text-slate-400">
-                  <div className="w-5 h-5 border-2 border-[#467173] border-t-transparent rounded-full animate-spin" />
+                  <div className="w-5 h-5 border-2 border-[#075aa3] border-t-transparent rounded-full animate-spin" />
                   <span className="text-xs">Cargando conversaciones…</span>
                 </div>
               ) : errorUsers ? (
@@ -763,7 +763,7 @@ export default function Home() {
                     </svg>
                   </div>
                   <p className="text-xs text-slate-500">{errorUsers}</p>
-                  <button onClick={() => window.location.reload()} className="text-xs text-[#467173] hover:underline font-medium">Reintentar</button>
+                  <button onClick={() => window.location.reload()} className="text-xs text-[#075aa3] hover:underline font-medium">Reintentar</button>
                 </div>
               ) : chatListEntries.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-16 gap-2 text-slate-400">
@@ -789,7 +789,7 @@ export default function Home() {
           </div>
 
           {/* ── Col 3: Chat Detail (email-style) ── */}
-          <main className={`flex-1 flex flex-col overflow-hidden bg-[#F2FAEC] ${showDetailOnMobile ? "flex" : "hidden md:flex"}`}>
+          <main className={`flex-1 flex flex-col overflow-hidden bg-[#EFF6FF] ${showDetailOnMobile ? "flex" : "hidden md:flex"}`}>
             {selectedUser === null ? (
               <div className="flex flex-col items-center justify-center flex-1 gap-5 text-slate-400 px-8">
                 <div className="w-20 h-20 rounded-2xl bg-white border border-slate-200 shadow-sm flex items-center justify-center">
@@ -805,7 +805,7 @@ export default function Home() {
                   <div className="flex flex-wrap justify-center gap-2 max-w-sm">
                     {[...datesWithChats].sort((a, b) => b.localeCompare(a)).slice(0, 5).map(d => (
                       <button key={d} onClick={() => setSelectedCalDate(d)}
-                        className="text-xs px-3 py-1.5 bg-white border border-slate-200 rounded-full text-slate-600 hover:bg-[#D9EFB5] hover:border-[#D9EFB5] hover:text-[#467173] transition-colors capitalize">
+                        className="text-xs px-3 py-1.5 bg-white border border-slate-200 rounded-full text-slate-600 hover:bg-[#BFDBFE] hover:border-[#BFDBFE] hover:text-[#075aa3] transition-colors capitalize">
                         {formatDateShort(d)}
                       </button>
                     ))}
@@ -825,7 +825,7 @@ export default function Home() {
                       </svg>
                     </button>
                     {/* Avatar */}
-                    <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-400 to-teal-500 text-white text-sm font-bold shrink-0 shadow-sm">
+                    <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-blue-700 text-white text-sm font-bold shrink-0 shadow-sm">
                       {String(selectedUser).slice(-2)}
                     </div>
                     {/* Meta */}
@@ -846,7 +846,7 @@ export default function Home() {
                         <button
                           onClick={() => { navigator.clipboard.writeText(window.location.href); setLinkCopied(true); setTimeout(() => setLinkCopied(false), 2000); }}
                           className={`flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium border rounded-lg transition-colors
-                            ${linkCopied ? "bg-[#F2FAEC] border-[#D9EFB5] text-[#467173]" : "bg-white border-slate-200 text-slate-500 hover:bg-[#F2FAEC]"}`}>
+                            ${linkCopied ? "bg-[#EFF6FF] border-[#BFDBFE] text-[#075aa3]" : "bg-white border-slate-200 text-slate-500 hover:bg-[#EFF6FF]"}`}>
                           {linkCopied
                             ? <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" /></svg>
                             : <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" viewBox="0 0 20 20" fill="currentColor"><path d="M12.586 4.586a2 2 0 112.828 2.828l-3 3a2 2 0 01-2.828 0 1 1 0 00-1.414 1.414 4 4 0 005.656 0l3-3a4 4 0 00-5.656-5.656l-1.5 1.5a1 1 0 101.414 1.414l1.5-1.5zm-5 5a2 2 0 012.828 0 1 1 0 101.414-1.414 4 4 0 00-5.656 0l-3 3a4 4 0 105.656 5.656l1.5-1.5a1 1 0 10-1.414-1.414l-1.5 1.5a2 2 0 11-2.828-2.828l3-3z" /></svg>
@@ -854,14 +854,14 @@ export default function Home() {
                           <span className="hidden sm:inline">{linkCopied ? "¡Copiado!" : "Enlace"}</span>
                         </button>
                         <button onClick={exportCurrentChat}
-                          className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium text-[#467173] bg-[#F2FAEC] border border-[#D9EFB5] rounded-lg hover:bg-[#c8e49a] transition-colors">
+                          className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium text-[#075aa3] bg-[#EFF6FF] border border-[#BFDBFE] rounded-lg hover:bg-[#93C5FD] transition-colors">
                           <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" viewBox="0 0 20 20" fill="currentColor">
                             <path fillRule="evenodd" d="M6 2a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V7.414A2 2 0 0015.414 6L12 2.586A2 2 0 0010.586 2H6zm5 6a1 1 0 10-2 0v3.586L7.707 10.293a1 1 0 10-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 11.586V8z" clipRule="evenodd" />
                           </svg>
                           <span className="hidden sm:inline">Exportar</span>
                         </button>
                         <button onClick={() => window.open(`/resumen?chat=${encodeURIComponent(selectedUser!)}&fecha=${encodeURIComponent(selectedFecha!)}`, "_blank")}
-                          className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium text-slate-600 bg-white border border-slate-200 rounded-lg hover:bg-[#F2FAEC] transition-colors">
+                          className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium text-slate-600 bg-white border border-slate-200 rounded-lg hover:bg-[#EFF6FF] transition-colors">
                           <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" viewBox="0 0 20 20" fill="currentColor">
                             <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z" />
                             <path fillRule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3zm-3 4a1 1 0 100 2h.01a1 1 0 100-2H7zm3 0a1 1 0 100 2h3a1 1 0 100-2h-3z" clipRule="evenodd" />
@@ -879,7 +879,7 @@ export default function Home() {
                     <div ref={chatTopRef} />
                     {loadingChat ? (
                       <div className="flex flex-col items-center justify-center py-20 gap-3 text-slate-400">
-                        <div className="w-6 h-6 border-2 border-[#467173] border-t-transparent rounded-full animate-spin" />
+                        <div className="w-6 h-6 border-2 border-[#075aa3] border-t-transparent rounded-full animate-spin" />
                         <span className="text-xs">Cargando mensajes…</span>
                       </div>
                     ) : errorChat ? (
@@ -891,7 +891,7 @@ export default function Home() {
                         </div>
                         <p className="text-sm text-slate-500">{errorChat}</p>
                         <button onClick={() => selectedUser && selectedFecha && loadChat(selectedUser, selectedFecha)}
-                          className="text-xs text-[#467173] hover:underline font-medium">Reintentar</button>
+                          className="text-xs text-[#075aa3] hover:underline font-medium">Reintentar</button>
                       </div>
                     ) : messages.length === 0 ? (
                       <div className="flex items-center justify-center py-20 text-slate-400 text-sm">Sin mensajes en esta fecha</div>
@@ -904,7 +904,7 @@ export default function Home() {
                         return (
                           <div key={i} className={`flex items-end gap-2.5 ${isUser ? "justify-end" : "justify-start"}`}>
                             {!isUser && (
-                              <div className="w-7 h-7 rounded-full bg-gradient-to-br from-emerald-400 to-teal-500 text-white text-[10px] font-bold flex items-center justify-center shrink-0 mb-0.5 shadow-sm">DR</div>
+                              <div className="w-7 h-7 rounded-full bg-gradient-to-br from-blue-500 to-blue-700 text-white text-[10px] font-bold flex items-center justify-center shrink-0 mb-0.5 shadow-sm">DR</div>
                             )}
                             <div className={`max-w-[80%] md:max-w-[70%] flex flex-col gap-1 ${isUser ? "items-end" : "items-start"}`}>
                               {botHtml ? (
@@ -913,16 +913,16 @@ export default function Home() {
                                     prose-p:text-slate-700 prose-p:leading-relaxed prose-p:my-1.5
                                     prose-headings:font-semibold prose-headings:text-slate-800
                                     prose-strong:text-slate-800
-                                    prose-a:text-[#467173] prose-a:no-underline hover:prose-a:underline
+                                    prose-a:text-[#075aa3] prose-a:no-underline hover:prose-a:underline
                                     prose-ul:my-2 prose-ol:my-2 prose-li:my-0.5
-                                    prose-code:text-[#467173] prose-code:bg-[#F2FAEC] prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-code:text-xs prose-code:before:content-none prose-code:after:content-none
+                                    prose-code:text-[#075aa3] prose-code:bg-[#EFF6FF] prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-code:text-xs prose-code:before:content-none prose-code:after:content-none
                                     prose-pre:bg-slate-900 prose-pre:text-slate-100 prose-pre:rounded-xl prose-pre:text-xs
                                     prose-blockquote:border-l-4 prose-blockquote:border-[#a8d08d] prose-blockquote:text-slate-500"
                                   dangerouslySetInnerHTML={{ __html: botHtml }}
                                 />
                               ) : (
                                 <div className={`px-4 py-3 rounded-2xl text-sm leading-relaxed whitespace-pre-wrap
-                                  ${isUser ? "bg-[#467173] text-white rounded-br-sm shadow-sm" : "bg-white border border-slate-200 text-slate-800 rounded-bl-sm shadow-sm"}`}>
+                                  ${isUser ? "bg-[#075aa3] text-white rounded-br-sm shadow-sm" : "bg-white border border-slate-200 text-slate-800 rounded-bl-sm shadow-sm"}`}>
                                   {text}
                                 </div>
                               )}
@@ -949,7 +949,7 @@ export default function Home() {
 
       {/* ══════════════════════ TAB: CHAT SIMULATOR ══════════════════════ */}
       {currentTab === "chat" && (
-        <div className="flex flex-1 flex-col bg-[#F2FAEC] overflow-hidden">
+        <div className="flex flex-1 flex-col bg-[#EFF6FF] overflow-hidden">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between px-4 md:px-6 py-4 bg-white border-b border-slate-200 shrink-0 gap-3">
             <div>
               <h2 className="text-lg font-semibold text-slate-800">Simulador de Chat</h2>
@@ -957,7 +957,7 @@ export default function Home() {
             </div>
             <button
               onClick={() => { setSimMessages([{ role: "bot", text: "¡Hola! Soy el simulador de Dr. Recetas. ¿En qué te puedo ayudar hoy?" }]); localStorage.removeItem("dr-recetas-sim-id"); setSimInput(""); }}
-              className="flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-slate-600 bg-white border border-slate-200 rounded-xl hover:bg-[#F2FAEC] transition-colors shadow-sm w-full sm:w-auto shrink-0">
+              className="flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-slate-600 bg-white border border-slate-200 rounded-xl hover:bg-[#EFF6FF] transition-colors shadow-sm w-full sm:w-auto shrink-0">
               <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-slate-400" viewBox="0 0 20 20" fill="currentColor">
                 <path fillRule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clipRule="evenodd" />
               </svg>
@@ -974,10 +974,10 @@ export default function Home() {
                     <div className={`max-w-[85%] md:max-w-[75%] flex flex-col gap-1 ${isUser ? "items-end" : "items-start"}`}>
                       <span className="text-xs text-slate-400 px-1">{isUser ? "Tú" : "Bot (Simulador)"}</span>
                       {botHtml ? (
-                        <div className="prose prose-sm prose-slate max-w-none px-4 py-3 rounded-2xl rounded-bl-sm bg-white border border-slate-200 shadow-sm prose-p:text-slate-700 prose-p:leading-relaxed prose-p:my-1.5 prose-headings:font-semibold prose-headings:text-slate-800 prose-strong:text-slate-800 prose-a:text-[#467173] prose-a:no-underline hover:prose-a:underline prose-ul:my-2 prose-ol:my-2 prose-li:my-0.5 prose-code:text-[#467173] prose-code:bg-[#F2FAEC] prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-code:text-xs prose-code:before:content-none prose-code:after:content-none"
+                        <div className="prose prose-sm prose-slate max-w-none px-4 py-3 rounded-2xl rounded-bl-sm bg-white border border-slate-200 shadow-sm prose-p:text-slate-700 prose-p:leading-relaxed prose-p:my-1.5 prose-headings:font-semibold prose-headings:text-slate-800 prose-strong:text-slate-800 prose-a:text-[#075aa3] prose-a:no-underline hover:prose-a:underline prose-ul:my-2 prose-ol:my-2 prose-li:my-0.5 prose-code:text-[#075aa3] prose-code:bg-[#EFF6FF] prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-code:text-xs prose-code:before:content-none prose-code:after:content-none"
                           dangerouslySetInnerHTML={{ __html: botHtml }} />
                       ) : (
-                        <div className={`px-4 py-2.5 rounded-2xl text-sm leading-relaxed whitespace-pre-wrap ${isUser ? "bg-[#467173] text-white rounded-br-sm" : "bg-white border border-slate-200 text-slate-800 rounded-bl-sm shadow-sm"}`}>{msg.text}</div>
+                        <div className={`px-4 py-2.5 rounded-2xl text-sm leading-relaxed whitespace-pre-wrap ${isUser ? "bg-[#075aa3] text-white rounded-br-sm" : "bg-white border border-slate-200 text-slate-800 rounded-bl-sm shadow-sm"}`}>{msg.text}</div>
                       )}
                     </div>
                   </div>
@@ -1010,7 +1010,7 @@ export default function Home() {
                   let anonId = localStorage.getItem("dr-recetas-sim-id");
                   if (!anonId) { anonId = `${Math.floor(Math.random() * 1000000000)}_${Date.now()}`; localStorage.setItem("dr-recetas-sim-id", anonId); }
                   const rawAnonId = anonId.replace(/[^0-9]/g, "").substring(0, 10);
-                  const response = await fetch("https://agente.apidoctorrecetas.com/api/chat", {
+                  const response = await fetch("https://tetra.apidoctorrecetas.com/api/chat", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ chat_id: Number(rawAnonId), message: text.trim() }),
@@ -1026,10 +1026,10 @@ export default function Home() {
               <textarea value={simInput} onChange={e => setSimInput(e.target.value)}
                 onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); e.currentTarget.form?.dispatchEvent(new Event("submit", { cancelable: true, bubbles: true })); } }}
                 disabled={simIsLoading} placeholder="Escribe un mensaje..."
-                className="flex-1 max-h-32 min-h-[44px] resize-none overflow-y-auto rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-base md:text-sm text-slate-900 focus:border-[#467173] focus:outline-none focus:ring-1 focus:ring-[#467173] outline-none disabled:bg-[#F2FAEC] disabled:text-slate-400"
+                className="flex-1 max-h-32 min-h-[44px] resize-none overflow-y-auto rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-base md:text-sm text-slate-900 focus:border-[#075aa3] focus:outline-none focus:ring-1 focus:ring-[#075aa3] outline-none disabled:bg-[#EFF6FF] disabled:text-slate-400"
                 rows={1} />
               <button type="submit" disabled={!simInput.trim() || simIsLoading}
-                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#467173] text-white transition-colors hover:bg-[#467173] disabled:opacity-50">
+                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#075aa3] text-white transition-colors hover:bg-[#075aa3] disabled:opacity-50">
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                   <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" />
                 </svg>
@@ -1041,7 +1041,7 @@ export default function Home() {
 
       {/* ══════════════════════ TAB: APRENDIZAJE ══════════════════════ */}
       {currentTab === "aprendizaje" && (
-        <div className="flex flex-1 flex-col bg-[#F2FAEC] overflow-hidden relative">
+        <div className="flex flex-1 flex-col bg-[#EFF6FF] overflow-hidden relative">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between px-4 md:px-6 py-4 bg-white border-b border-slate-200 shrink-0 gap-3">
             <div>
               <h2 className="text-lg font-semibold text-slate-800">Base de Conocimiento</h2>
@@ -1058,7 +1058,7 @@ export default function Home() {
           <div className="flex-1 overflow-y-auto w-full max-w-7xl mx-auto p-4 md:p-6">
             <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden overflow-x-auto">
               <table className="w-full text-left border-collapse text-sm min-w-[600px]">
-                <thead className="bg-[#F2FAEC] border-b border-slate-200 text-slate-500">
+                <thead className="bg-[#EFF6FF] border-b border-slate-200 text-slate-500">
                   <tr>
                     <th className="px-5 py-3 font-medium w-16 text-center">ID</th>
                     <th className="px-5 py-3 font-medium w-1/3">Pregunta</th>
@@ -1072,7 +1072,7 @@ export default function Home() {
                     <tr><td colSpan={3} className="px-5 py-8 text-center text-slate-400">No hay elementos aún.</td></tr>
                   ) : (
                     knowledgeList.map(k => (
-                      <tr key={k.id} className="hover:bg-[#F2FAEC] transition-colors">
+                      <tr key={k.id} className="hover:bg-[#EFF6FF] transition-colors">
                         <td className="px-5 py-4 text-center text-slate-400 font-medium">#{k.id}</td>
                         <td className="px-5 py-4 text-slate-800 font-medium align-top leading-relaxed">{k.pregunta}</td>
                         <td className="px-5 py-4 text-slate-600 align-top leading-relaxed">{k.respuesta}</td>
@@ -1087,7 +1087,7 @@ export default function Home() {
           {showKnowledgeModal && (
             <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
               <div className="bg-white rounded-2xl shadow-xl w-full max-w-2xl overflow-hidden flex flex-col">
-                <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-[#F2FAEC]/50">
+                <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-[#EFF6FF]/50">
                   <h3 className="text-base font-semibold text-slate-900">Añadir Nuevo Conocimiento</h3>
                   <button onClick={() => setShowKnowledgeModal(false)} className="text-slate-400 hover:text-slate-600 transition-colors">
                     <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" viewBox="0 0 20 20" fill="currentColor">
@@ -1110,7 +1110,7 @@ export default function Home() {
                   </div>
                   <div className="flex flex-col sm:flex-row items-center justify-end gap-3 border-t border-slate-100 pt-5">
                     <button type="button" onClick={() => setShowKnowledgeModal(false)}
-                      className="w-full sm:w-auto px-5 py-2.5 text-sm font-medium text-slate-600 bg-white border border-slate-200 rounded-xl hover:bg-[#F2FAEC] transition-colors">
+                      className="w-full sm:w-auto px-5 py-2.5 text-sm font-medium text-slate-600 bg-white border border-slate-200 rounded-xl hover:bg-[#EFF6FF] transition-colors">
                       Cancelar
                     </button>
                     <button type="submit" disabled={savingKnowledge}
@@ -1129,7 +1129,7 @@ export default function Home() {
       {/* ── Footer ── */}
       <footer className="shrink-0 bg-white border-t border-slate-200 py-2.5">
         <p className="text-center text-[11px] text-slate-400">
-          <span className="font-semibold text-[#467173]">Islanmed</span>
+          <span className="font-semibold text-[#075aa3]">Islanmed</span>
           <span className="mx-1.5 text-slate-300">·</span>
           Agente IA · Panel CRM
           <span className="mx-2 text-slate-300">|</span>

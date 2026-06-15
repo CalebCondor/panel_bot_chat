@@ -35,18 +35,18 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#F2FAEC] px-4">
+    <div className="min-h-screen flex items-center justify-center bg-[#EFF6FF] px-4">
       {/* Card */}
       <div className="w-full max-w-xs bg-white rounded-2xl shadow-xl overflow-hidden">
 
         {/* Top brand band */}
-        <div className="flex flex-col items-center justify-center gap-2 bg-[#467173] px-6 py-5">
+        <div className="flex flex-col items-center justify-center gap-2 bg-[#075aa3] px-6 py-5">
           <img
-            src="https://islandmedpr.com/assets/images/logo-islandmed.png"
+            src="https://tetrapr.com/wp-content/uploads/2024/10/Logo_TETRA-White.svg"
             alt="Doctor Recetas"
             className="h-10 w-auto object-contain select-none brightness-0 invert"
           />
-          <p className="text-[#D9EFB5] text-[10px] font-semibold tracking-widest uppercase">
+          <p className="text-[#BFDBFE] text-[10px] font-semibold tracking-widest uppercase">
             Agente IA · Panel de Administración
           </p>
         </div>
@@ -75,7 +75,7 @@ export default function LoginPage() {
                   value={usuario}
                   onChange={(e) => setUsuario(e.target.value)}
                   required
-                  className="w-full pl-9 pr-3 py-2.5 rounded-lg border border-slate-200 bg-slate-50 text-slate-900 placeholder-slate-300 focus:outline-none focus:ring-2 focus:ring-[#467173] focus:border-transparent transition text-sm"
+                  className="w-full pl-9 pr-3 py-2.5 rounded-lg border border-slate-200 bg-slate-50 text-slate-900 placeholder-slate-300 focus:outline-none focus:ring-2 focus:ring-[#075aa3] focus:border-transparent transition text-sm"
                   placeholder="admin"
                 />
               </div>
@@ -99,13 +99,13 @@ export default function LoginPage() {
                   value={contrasena}
                   onChange={(e) => setContrasena(e.target.value)}
                   required
-                  className="w-full pl-9 pr-9 py-2.5 rounded-lg border border-slate-200 bg-slate-50 text-slate-900 placeholder-slate-300 focus:outline-none focus:ring-2 focus:ring-[#467173] focus:border-transparent transition text-sm"
+                  className="w-full pl-9 pr-9 py-2.5 rounded-lg border border-slate-200 bg-slate-50 text-slate-900 placeholder-slate-300 focus:outline-none focus:ring-2 focus:ring-[#075aa3] focus:border-transparent transition text-sm"
                   placeholder="••••••••"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(v => !v)}
-                  className="absolute inset-y-0 right-3 flex items-center text-slate-400 hover:text-[#467173] transition-colors"
+                  className="absolute inset-y-0 right-3 flex items-center text-slate-400 hover:text-[#075aa3] transition-colors"
                   tabIndex={-1}
                   aria-label={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
                 >
@@ -138,7 +138,7 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full flex items-center justify-center gap-2 py-2.5 px-4 bg-[#467173] hover:bg-[#355759] disabled:opacity-70 text-white font-semibold rounded-lg transition-colors shadow-sm text-sm focus:outline-none focus:ring-2 focus:ring-[#467173] focus:ring-offset-2"
+              className="w-full flex items-center justify-center gap-2 py-2.5 px-4 bg-[#075aa3] hover:bg-[#355759] disabled:opacity-70 text-white font-semibold rounded-lg transition-colors shadow-sm text-sm focus:outline-none focus:ring-2 focus:ring-[#075aa3] focus:ring-offset-2"
             >
               {loading ? (
                 <>
@@ -165,7 +165,7 @@ export default function LoginPage() {
         </div>
 
         {/* Bottom accent strip */}
-        <div className="h-1 bg-gradient-to-r from-[#D9EFB5] via-[#467173] to-[#D9EFB5]" />
+        <div className="h-1 bg-gradient-to-r from-[#BFDBFE] via-[#075aa3] to-[#BFDBFE]" />
       </div>
     </div>
   );
