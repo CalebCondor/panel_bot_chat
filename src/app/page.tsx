@@ -164,6 +164,14 @@ export default function Home() {
   const [confirmDelete, setConfirmDelete] = useState<{ chatId: string; fecha: string } | null>(null);
   const [selectedFecha, setSelectedFecha] = useState<string | null>(null);
   const [linkCopied, setLinkCopied] = useState(false);
+
+  const [pauseLoading, setPauseLoading] = useState(false);
+  const [pauseStatus, setPauseStatus] = useState<{ paused: boolean; pausado_en?: string; reanudado_en?: string } | null>(null);
+  const [pauseError, setPauseError] = useState<string | null>(null);
+
+  const [humanInput, setHumanInput] = useState("");
+  const [humanSending, setHumanSending] = useState(false);
+  const [humanError, setHumanError] = useState<string | null>(null);
   
   const chatTopRef = useRef<HTMLDivElement>(null);
   const urlParamsHandled = useRef(false);
@@ -259,6 +267,47 @@ export default function Home() {
       .finally(() => setLoadingUsers(false));
   }, []);
 
+  const loadPauseStatus = useCallback(async (chatId: string) => {
+    setPauseError(null);
+    try {
+      const r = await fetch(`${API_BASE}/chat/user/${chatId}/pause-status`);
+      const data = await r.json();
+      if (data?.success) {
+        setPauseStatus({ paused: !!data.paused, pausado_en: data.pausado_en, reanudado_en: data.reanudado_en });
+      } else {
+        setPauseStatus({ paused: false });
+      }
+    } catch {
+      setPauseStatus({ paused: false });
+    }
+  }, []);
+
+  const togglePause = useCallback(async () => {
+    if (!selectedUser || pauseLoading) return;
+    const isPaused = pauseStatus?.paused === true;
+    const action = isPaused ? "resume" : "pause";
+    const verb = isPaused ? "Devolver al bot" : "Tomar la conversación";
+    const desc = isPaused
+      ? "La IA volverá a responderle a este usuario."
+      : "Tú te harás cargo de responderle a este usuario. La IA no intervendrá hasta que la devuelvas.";
+    if (!confirm(`¿${verb} con #${selectedUser.slice(-8)}?\n\n${desc}`)) return;
+    setPauseLoading(true);
+    setPauseError(null);
+    try {
+      const r = await fetch(`${API_BASE}/chat/user/${selectedUser}/${action}`, { method: "POST" });
+      const data = await r.json();
+      if (data?.success) {
+        await loadPauseStatus(selectedUser);
+      } else {
+        setPauseError(data?.error || `No se pudo ${action === "pause" ? "tomar" : "devolver"} la conversación`);
+      }
+    } catch {
+      setPauseError("Error de conexión con la API");
+    } finally {
+      setPauseLoading(false);
+    }
+  }, [selectedUser, pauseLoading, pauseStatus, loadPauseStatus]);
+
   const loadChat = useCallback((userId: string, fecha: string) => {
     setSelectedUser(userId);
     setSelectedFecha(fecha);
@@ -268,6 +317,7 @@ export default function Home() {
     setLoadingChat(true);
     setErrorChat(null);
     setLinkCopied(false);
+    setPauseStatus(null);
     if (typeof window !== "undefined") {
       window.history.replaceState(null, "", `?chat=${encodeURIComponent(userId)}&fecha=${encodeURIComponent(fecha)}`);
     }
@@ -282,7 +332,33 @@ export default function Home() {
       })
       .catch(() => setErrorChat("No se pudo cargar el chat"))
       .finally(() => setLoadingChat(false));
-  }, []);
+    loadPauseStatus(userId);
+  }, [loadPauseStatus]);
+
+  const sendHumanMessage = useCallback(async () => {
+    if (!selectedUser || !humanInput.trim() || humanSending) return;
+    setHumanSending(true);
+    setHumanError(null);
+    const text = humanInput.trim();
+    try {
+      const r = await fetch(`${API_BASE}/chat/user/${selectedUser}/human-message`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: text }),
+      });
+      const data = await r.json();
+      if (data?.success) {
+        setHumanInput("");
+        if (selectedFecha) loadChat(selectedUser, selectedFecha);
+      } else {
+        setHumanError(data?.error || "No se pudo enviar el mensaje");
+      }
+    } catch {
+      setHumanError("Error de conexión con la API");
+    } finally {
+      setHumanSending(false);
+    }
+  }, [selectedUser, selectedFecha, humanInput, humanSending, loadChat]);
 
   useEffect(() => {
     if (isAuthenticated && !urlParamsHandled.current) {
@@ -841,37 +917,83 @@ export default function Home() {
                       )}
                     </div>
                     {/* Action buttons */}
-                    {!loadingChat && messages.length > 0 && (
+                    {!loadingChat && (
                       <div className="flex items-center gap-1.5 shrink-0 flex-wrap justify-end">
                         <button
-                          onClick={() => { navigator.clipboard.writeText(window.location.href); setLinkCopied(true); setTimeout(() => setLinkCopied(false), 2000); }}
-                          className={`flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium border rounded-lg transition-colors
-                            ${linkCopied ? "bg-[#F2FAEC] border-[#D9EFB5] text-[#467173]" : "bg-white border-slate-200 text-slate-500 hover:bg-[#F2FAEC]"}`}>
-                          {linkCopied
-                            ? <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" /></svg>
-                            : <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" viewBox="0 0 20 20" fill="currentColor"><path d="M12.586 4.586a2 2 0 112.828 2.828l-3 3a2 2 0 01-2.828 0 1 1 0 00-1.414 1.414 4 4 0 005.656 0l3-3a4 4 0 00-5.656-5.656l-1.5 1.5a1 1 0 101.414 1.414l1.5-1.5zm-5 5a2 2 0 012.828 0 1 1 0 101.414-1.414 4 4 0 00-5.656 0l-3 3a4 4 0 105.656 5.656l1.5-1.5a1 1 0 10-1.414-1.414l-1.5 1.5a2 2 0 11-2.828-2.828l3-3z" /></svg>
-                          }
-                          <span className="hidden sm:inline">{linkCopied ? "¡Copiado!" : "Enlace"}</span>
+                          onClick={togglePause}
+                          disabled={pauseLoading}
+                          title={pauseStatus?.paused ? "Devolver la conversación al bot" : "Tomar la conversación (la IA dejará de responder)"}
+                          className={`flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium border rounded-lg transition-colors disabled:opacity-60
+                            ${pauseStatus?.paused
+                              ? "bg-slate-100 border-slate-400 text-slate-700 hover:bg-slate-200"
+                              : "bg-white border-slate-200 text-slate-500 hover:bg-[#F2FAEC]"}`}>
+                          {pauseLoading ? (
+                            <div className="w-3.5 h-3.5 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                          ) : pauseStatus?.paused ? (
+                            <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" viewBox="0 0 20 20" fill="currentColor">
+                              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clipRule="evenodd" />
+                            </svg>
+                          ) : (
+                            <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" viewBox="0 0 20 20" fill="currentColor">
+                              <path d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" />
+                            </svg>
+                          )}
+                          <span className="hidden sm:inline">{pauseStatus?.paused ? "Devolver al Agente" : "Tomar conversación"}</span>
                         </button>
-                        <button onClick={exportCurrentChat}
-                          className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium text-[#467173] bg-[#F2FAEC] border border-[#D9EFB5] rounded-lg hover:bg-[#c8e49a] transition-colors">
-                          <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" viewBox="0 0 20 20" fill="currentColor">
-                            <path fillRule="evenodd" d="M6 2a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V7.414A2 2 0 0015.414 6L12 2.586A2 2 0 0010.586 2H6zm5 6a1 1 0 10-2 0v3.586L7.707 10.293a1 1 0 10-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 11.586V8z" clipRule="evenodd" />
-                          </svg>
-                          <span className="hidden sm:inline">Exportar</span>
-                        </button>
-                        <button onClick={() => window.open(`/resumen?chat=${encodeURIComponent(selectedUser!)}&fecha=${encodeURIComponent(selectedFecha!)}`, "_blank")}
-                          className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium text-slate-600 bg-white border border-slate-200 rounded-lg hover:bg-[#F2FAEC] transition-colors">
-                          <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" viewBox="0 0 20 20" fill="currentColor">
-                            <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z" />
-                            <path fillRule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3zm-3 4a1 1 0 100 2h.01a1 1 0 100-2H7zm3 0a1 1 0 100 2h3a1 1 0 100-2h-3z" clipRule="evenodd" />
-                          </svg>
-                          <span className="hidden sm:inline">Resumen</span>
-                        </button>
+                        {messages.length > 0 && (
+                          <>
+                            <button
+                              onClick={() => { navigator.clipboard.writeText(window.location.href); setLinkCopied(true); setTimeout(() => setLinkCopied(false), 2000); }}
+                              className={`flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium border rounded-lg transition-colors
+                                ${linkCopied ? "bg-[#F2FAEC] border-[#D9EFB5] text-[#467173]" : "bg-white border-slate-200 text-slate-500 hover:bg-[#F2FAEC]"}`}>
+                              {linkCopied
+                                ? <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" /></svg>
+                                : <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" viewBox="0 0 20 20" fill="currentColor"><path d="M12.586 4.586a2 2 0 112.828 2.828l-3 3a2 2 0 01-2.828 0 1 1 0 00-1.414 1.414 4 4 0 005.656 0l3-3a4 4 0 00-5.656-5.656l-1.5 1.5a1 1 0 101.414 1.414l1.5-1.5zm-5 5a2 2 0 012.828 0 1 1 0 101.414-1.414 4 4 0 00-5.656 0l-3 3a4 4 0 105.656 5.656l1.5-1.5a1 1 0 10-1.414-1.414l-1.5 1.5a2 2 0 11-2.828-2.828l3-3z" /></svg>
+                              }
+                              <span className="hidden sm:inline">{linkCopied ? "¡Copiado!" : "Enlace"}</span>
+                            </button>
+                            <button onClick={exportCurrentChat}
+                              className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium text-[#467173] bg-[#F2FAEC] border border-[#D9EFB5] rounded-lg hover:bg-[#c8e49a] transition-colors">
+                              <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" viewBox="0 0 20 20" fill="currentColor">
+                                <path fillRule="evenodd" d="M6 2a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V7.414A2 2 0 0015.414 6L12 2.586A2 2 0 0010.586 2H6zm5 6a1 1 0 10-2 0v3.586L7.707 10.293a1 1 0 10-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 11.586V8z" clipRule="evenodd" />
+                              </svg>
+                              <span className="hidden sm:inline">Exportar</span>
+                            </button>
+                            <button onClick={() => window.open(`/resumen?chat=${encodeURIComponent(selectedUser!)}&fecha=${encodeURIComponent(selectedFecha!)}`, "_blank")}
+                              className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium text-slate-600 bg-white border border-slate-200 rounded-lg hover:bg-[#F2FAEC] transition-colors">
+                              <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" viewBox="0 0 20 20" fill="currentColor">
+                                <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z" />
+                                <path fillRule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3zm-3 4a1 1 0 100 2h.01a1 1 0 100-2H7zm3 0a1 1 0 100 2h3a1 1 0 100-2h-3z" clipRule="evenodd" />
+                              </svg>
+                              <span className="hidden sm:inline">Resumen</span>
+                            </button>
+                          </>
+                        )}
                       </div>
                     )}
                   </div>
                 </div>
+
+                {/* Paused banner */}
+                {pauseStatus?.paused && (
+                  <div className="bg-slate-100 border-b border-slate-300 px-5 py-2.5 shrink-0 flex items-center gap-2 text-slate-700">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 shrink-0" viewBox="0 0 20 20" fill="currentColor">
+                      <path d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" />
+                    </svg>
+                    <span className="text-xs font-medium">
+                      <strong>Tú estás a cargo</strong> de esta conversación{pauseStatus.pausado_en ? ` desde ${new Date(pauseStatus.pausado_en).toLocaleString("es-MX", { dateStyle: "short", timeStyle: "short" })}` : ""}. La IA no responderá hasta que la devuelvas.
+                    </span>
+                    <button onClick={togglePause} disabled={pauseLoading}
+                      className="ml-auto text-xs font-semibold text-[#467173] hover:text-[#355759] underline underline-offset-2 disabled:opacity-50 whitespace-nowrap">
+                      Devolver al bot
+                    </button>
+                  </div>
+                )}
+                {pauseError && (
+                  <div className="bg-red-50 border-b border-red-200 px-5 py-2 shrink-0 text-xs text-red-700">
+                    {pauseError}
+                  </div>
+                )}
 
                 {/* Messages thread */}
                 <div className="flex-1 overflow-y-auto">
@@ -941,6 +1063,57 @@ export default function Home() {
                     )}
                   </div>
                 </div>
+
+                {/* Human takeover input — solo visible cuando el humano tomó la conversación */}
+                {pauseStatus?.paused && (
+                  <div className="bg-slate-50 border-t border-slate-200 px-4 md:px-6 py-3 shrink-0">
+                    <form
+                      className="max-w-3xl mx-auto"
+                      onSubmit={(e) => {
+                        e.preventDefault();
+                        sendHumanMessage();
+                      }}
+                    >
+                      <div className="flex items-center gap-2 px-4 py-1.5 rounded-full bg-white border border-slate-300 focus-within:ring-2 focus-within:ring-[#467173] focus-within:border-transparent transition">
+                        <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 shrink-0 select-none">
+                          Humano
+                        </span>
+                        <span className="w-px h-5 bg-slate-200 shrink-0" />
+                        <textarea
+                          value={humanInput}
+                          onChange={(e) => { setHumanInput(e.target.value); setHumanError(null); }}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter" && !e.shiftKey) {
+                              e.preventDefault();
+                              if (humanInput.trim() && !humanSending) sendHumanMessage();
+                            }
+                          }}
+                          disabled={humanSending}
+                          placeholder="Escribe una respuesta…"
+                          rows={1}
+                          className="flex-1 resize-none bg-transparent text-sm text-slate-900 placeholder-slate-400 outline-none border-none focus:ring-0 focus:outline-none px-1 py-2 disabled:opacity-60"
+                          style={{ minHeight: 0 }}
+                        />
+                        <button
+                          type="submit"
+                          disabled={humanSending || !humanInput.trim()}
+                          className="h-8 w-8 rounded-full flex items-center justify-center text-white bg-[#467173] hover:bg-[#355759] disabled:bg-slate-300 disabled:cursor-not-allowed transition-all active:scale-90 shrink-0"
+                        >
+                          {humanSending ? (
+                            <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                          ) : (
+                            <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" viewBox="0 0 20 20" fill="currentColor">
+                              <path d="M3.105 2.289a.75.75 0 00-.826.95l1.414 4.925A1.5 1.5 0 005.135 9.25H10a.75.75 0 010 1.5H5.135a1.5 1.5 0 00-1.442 1.086l-1.414 4.926a.75.75 0 00.826.95 28.897 28.897 0 0015.293-7.155.75.75 0 000-1.114A28.897 28.897 0 003.105 2.289z" />
+                            </svg>
+                          )}
+                        </button>
+                      </div>
+                      {humanError && (
+                        <p className="mt-1.5 text-xs text-red-600 text-center">{humanError}</p>
+                      )}
+                    </form>
+                  </div>
+                )}
               </>
             )}
           </main>
