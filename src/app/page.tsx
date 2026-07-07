@@ -72,6 +72,7 @@ function MiniCalendar({
 }
 
 const API_BASE = "/api/proxy";
+import { WS_URL } from "@/lib/ws-url";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 type ContentBlock = { type: string; text?: string; [key: string]: unknown };
@@ -104,12 +105,15 @@ function toPlainText(markdown: string): string {
 }
 
 function roleLabel(role: string): string {
-  if (role === "human" || role === "user") return "Usuario";
+  if (role === "user") return "Usuario";
+  if (role === "human") return "Soporte";
   if (role === "ai" || role === "assistant") return "Dr. Recetas";
   return role;
 }
 
-function roleIsUser(role: string): boolean { return role === "human" || role === "user"; }
+function roleIsUser(role: string): boolean { return role === "user"; }
+function roleIsHuman(role: string): boolean { return role === "human"; }
+function roleIsBot(role: string): boolean { return role === "ai" || role === "assistant"; }
 
 function formatDate(dateStr: string): string {
   const [year, month, day] = dateStr.split("-").map(Number);
@@ -374,13 +378,12 @@ export default function Home() {
       return;
     }
 
-    const wsBase = API_BASE.startsWith("/") ? "ws://localhost:3000" : API_BASE.replace(/^http/, "ws");
     let mounted = true;
     let ws: WebSocket | null = null;
 
     const connect = () => {
       try {
-        ws = new WebSocket(`${wsBase.replace(/\/$/, "")}/`);
+        ws = new WebSocket(WS_URL);
       } catch {
         return;
       }
@@ -1109,15 +1112,34 @@ export default function Home() {
                     ) : (
                       messages.map((msg, i) => {
                         const isUser = roleIsUser(msg.role);
+                        const isHuman = roleIsHuman(msg.role);
+                        const isBot = roleIsBot(msg.role);
                         const text = extractText(msg.content).trim();
                         if (!text) return null;
-                        const botHtml = !isUser ? DOMPurify.sanitize(marked.parse(text) as string) : null;
+                        const botHtml = isBot ? DOMPurify.sanitize(marked.parse(text) as string) : null;
                         return (
                           <div key={i} className={`flex items-end gap-2.5 ${isUser ? "justify-end" : "justify-start"}`}>
                             {!isUser && (
-                              <div className="w-7 h-7 rounded-full bg-gradient-to-br from-emerald-400 to-teal-500 text-white text-[10px] font-bold flex items-center justify-center shrink-0 mb-0.5 shadow-sm">DR</div>
+                              <div className={`w-7 h-7 rounded-full text-white text-[10px] font-bold flex items-center justify-center shrink-0 mb-0.5 shadow-sm ${
+                                isHuman ? "bg-slate-700" : "bg-gradient-to-br from-emerald-400 to-teal-500"
+                              }`}>
+                                {isHuman ? (
+                                  <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
+                                  </svg>
+                                ) : (
+                                  "DR"
+                                )}
+                              </div>
                             )}
                             <div className={`max-w-[80%] md:max-w-[70%] flex flex-col gap-1 ${isUser ? "items-end" : "items-start"}`}>
+                              {(isHuman || isBot) && (
+                                <span className={`text-[10px] font-semibold uppercase tracking-wider px-1 ${
+                                  isHuman ? "text-slate-600" : "text-emerald-600"
+                                }`}>
+                                  {roleLabel(msg.role)}
+                                </span>
+                              )}
                               {botHtml ? (
                                 <div
                                   className="prose prose-sm prose-slate max-w-none px-4 py-3 rounded-2xl rounded-bl-sm bg-white border border-slate-200 shadow-sm
@@ -1132,8 +1154,13 @@ export default function Home() {
                                   dangerouslySetInnerHTML={{ __html: botHtml }}
                                 />
                               ) : (
-                                <div className={`px-4 py-3 rounded-2xl text-sm leading-relaxed whitespace-pre-wrap
-                                  ${isUser ? "bg-[#467173] text-white rounded-br-sm shadow-sm" : "bg-white border border-slate-200 text-slate-800 rounded-bl-sm shadow-sm"}`}>
+                                <div className={`px-4 py-3 rounded-2xl text-sm leading-relaxed whitespace-pre-wrap ${
+                                  isUser
+                                    ? "bg-[#467173] text-white rounded-br-sm shadow-sm"
+                                    : isHuman
+                                    ? "bg-slate-700 text-white rounded-bl-sm shadow-sm"
+                                    : "bg-white border border-slate-200 text-slate-800 rounded-bl-sm shadow-sm"
+                                }`}>
                                   {text}
                                 </div>
                               )}
@@ -1144,7 +1171,7 @@ export default function Home() {
                               )}
                             </div>
                             {isUser && (
-                              <div className="w-7 h-7 rounded-full bg-slate-200 text-slate-500 text-[10px] font-bold flex items-center justify-center shrink-0 mb-0.5">U</div>
+                              <div className="w-7 h-7 rounded-full bg-[#467173] text-white text-[10px] font-bold flex items-center justify-center shrink-0 mb-0.5">U</div>
                             )}
                           </div>
                         );
