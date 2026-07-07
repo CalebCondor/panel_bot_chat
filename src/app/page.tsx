@@ -172,6 +172,11 @@ export default function Home() {
   const [humanInput, setHumanInput] = useState("");
   const [humanSending, setHumanSending] = useState(false);
   const [humanError, setHumanError] = useState<string | null>(null);
+
+  // Notificación flotante cuando el usuario escribe algo nuevo (tiempo real)
+  const [newMessageNotice, setNewMessageNotice] = useState<string | null>(null);
+  const wsRef = useRef<WebSocket | null>(null);
+  const wsReconnectRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   
   const chatTopRef = useRef<HTMLDivElement>(null);
   const urlParamsHandled = useRef(false);
@@ -359,6 +364,83 @@ export default function Home() {
       setHumanSending(false);
     }
   }, [selectedUser, selectedFecha, humanInput, humanSending, loadChat]);
+
+  // WebSocket: actualiza el chat en tiempo real cuando el usuario envía un mensaje
+  // o cuando el estado de pausa cambia (ej. auto-resume desde backend)
+  useEffect(() => {
+    if (!selectedUser) {
+      wsRef.current?.close();
+      wsRef.current = null;
+      return;
+    }
+
+    const wsBase = API_BASE.startsWith("/") ? "ws://localhost:3000" : API_BASE.replace(/^http/, "ws");
+    let mounted = true;
+    let ws: WebSocket | null = null;
+
+    const connect = () => {
+      try {
+        ws = new WebSocket(`${wsBase.replace(/\/$/, "")}/`);
+      } catch {
+        return;
+      }
+      wsRef.current = ws;
+
+      ws.onopen = () => {
+        ws?.send(JSON.stringify({ event: "subscribe", data: { chat_id: selectedUser } }));
+      };
+
+      ws.onmessage = (ev) => {
+        if (!mounted) return;
+        try {
+          const msg = JSON.parse(ev.data) as {
+            event?: string;
+            data?: { role?: string; content?: unknown; paused?: boolean };
+          };
+          if (msg.event === "user-message") {
+            // El usuario escribió algo nuevo: refrescar el chat y notificar
+            if (selectedFecha) loadChat(selectedUser, selectedFecha);
+            const preview =
+              typeof msg.data?.content === "string"
+                ? msg.data.content.slice(0, 60)
+                : "Nuevo mensaje del usuario";
+            setNewMessageNotice(`💬 Usuario: ${preview}${preview.length >= 60 ? "…" : ""}`);
+            setTimeout(() => setNewMessageNotice(null), 5000);
+          } else if (msg.event === "human-message") {
+            // Confirmación del mensaje que YO envié (echo del backend)
+            if (selectedFecha) loadChat(selectedUser, selectedFecha);
+          } else if (msg.event === "pause-status") {
+            // Estado de pausa cambió (ej. auto-resume)
+            loadPauseStatus(selectedUser);
+          }
+        } catch {
+          /* ignore */
+        }
+      };
+
+      ws.onclose = () => {
+        if (!mounted) return;
+        wsReconnectRef.current = setTimeout(connect, 3000);
+      };
+
+      ws.onerror = () => {
+        ws?.close();
+      };
+    };
+
+    connect();
+
+    return () => {
+      mounted = false;
+      if (wsReconnectRef.current) clearTimeout(wsReconnectRef.current);
+      try {
+        ws?.send(JSON.stringify({ event: "unsubscribe", data: { chat_id: selectedUser } }));
+      } catch {
+        /* ignore */
+      }
+      ws?.close();
+    };
+  }, [selectedUser, selectedFecha, loadChat, loadPauseStatus]);
 
   useEffect(() => {
     if (isAuthenticated && !urlParamsHandled.current) {
@@ -973,6 +1055,13 @@ export default function Home() {
                     )}
                   </div>
                 </div>
+
+                {newMessageNotice && (
+                  <div className="fixed top-20 right-4 z-50 max-w-xs bg-[#467173] text-white text-xs font-medium px-4 py-3 rounded-xl shadow-lg flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-white animate-pulse shrink-0" />
+                    <span className="truncate">{newMessageNotice}</span>
+                  </div>
+                )}
 
                 {/* Paused banner */}
                 {pauseStatus?.paused && (
