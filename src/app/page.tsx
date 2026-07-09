@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback, useRef, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import DOMPurify from "dompurify";
 import { marked } from "marked";
+import { WS_URL } from "@/lib/ws-url";
 
 // ─── Mini Calendar ────────────────────────────────────────────────────────────
 const MONTHS_ES = [
@@ -71,7 +72,7 @@ function MiniCalendar({
   );
 }
 
-const API_BASE = "/api/proxy";
+const API_BASE = "https://agente.apidoctorrecetas.com/api";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 type ContentBlock = { type: string; text?: string; [key: string]: unknown };
@@ -104,12 +105,15 @@ function toPlainText(markdown: string): string {
 }
 
 function roleLabel(role: string): string {
-  if (role === "human" || role === "user") return "Usuario";
+  if (role === "user") return "Usuario";
+  if (role === "human") return "Soporte";
   if (role === "ai" || role === "assistant") return "Dr. Recetas";
   return role;
 }
 
-function roleIsUser(role: string): boolean { return role === "human" || role === "user"; }
+function roleIsUser(role: string): boolean { return role === "user"; }
+function roleIsHuman(role: string): boolean { return role === "human"; }
+function roleIsBot(role: string): boolean { return role === "ai" || role === "assistant"; }
 
 function formatDate(dateStr: string): string {
   const [year, month, day] = dateStr.split("-").map(Number);
@@ -164,7 +168,19 @@ export default function Home() {
   const [confirmDelete, setConfirmDelete] = useState<{ chatId: string; fecha: string } | null>(null);
   const [selectedFecha, setSelectedFecha] = useState<string | null>(null);
   const [linkCopied, setLinkCopied] = useState(false);
-  
+
+  const [pauseLoading, setPauseLoading] = useState(false);
+  const [pauseStatus, setPauseStatus] = useState<{ paused: boolean; pausado_en?: string; reanudado_en?: string } | null>(null);
+  const [pauseError, setPauseError] = useState<string | null>(null);
+
+  const [humanInput, setHumanInput] = useState("");
+  const [humanSending, setHumanSending] = useState(false);
+  const [humanError, setHumanError] = useState<string | null>(null);
+
+  const [newMessageNotice, setNewMessageNotice] = useState<string | null>(null);
+  const wsRef = useRef<WebSocket | null>(null);
+  const wsReconnectRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   const chatTopRef = useRef<HTMLDivElement>(null);
   const urlParamsHandled = useRef(false);
 
@@ -259,6 +275,47 @@ export default function Home() {
       .finally(() => setLoadingUsers(false));
   }, []);
 
+  const loadPauseStatus = useCallback(async (chatId: string) => {
+    setPauseError(null);
+    try {
+      const r = await fetch(`${API_BASE}/chat/user/${chatId}/pause-status`);
+      const data = await r.json();
+      if (data?.success) {
+        setPauseStatus({ paused: !!data.paused, pausado_en: data.pausado_en, reanudado_en: data.reanudado_en });
+      } else {
+        setPauseStatus({ paused: false });
+      }
+    } catch {
+      setPauseStatus({ paused: false });
+    }
+  }, []);
+
+  const togglePause = useCallback(async () => {
+    if (!selectedUser || pauseLoading) return;
+    const isPaused = pauseStatus?.paused === true;
+    const action = isPaused ? "resume" : "pause";
+    const verb = isPaused ? "Devolver al bot" : "Tomar la conversación";
+    const desc = isPaused
+      ? "La IA volverá a responderle a este usuario."
+      : "Tú te harás cargo de responderle a este usuario. La IA no intervendrá hasta que la devuelvas.";
+    if (!confirm(`¿${verb} con #${selectedUser.slice(-8)}?\n\n${desc}`)) return;
+    setPauseLoading(true);
+    setPauseError(null);
+    try {
+      const r = await fetch(`${API_BASE}/chat/user/${selectedUser}/${action}`, { method: "POST" });
+      const data = await r.json();
+      if (data?.success) {
+        await loadPauseStatus(selectedUser);
+      } else {
+        setPauseError(data?.error || `No se pudo ${action === "pause" ? "tomar" : "devolver"} la conversación`);
+      }
+    } catch {
+      setPauseError("Error de conexión con la API");
+    } finally {
+      setPauseLoading(false);
+    }
+  }, [selectedUser, pauseLoading, pauseStatus, loadPauseStatus]);
+
   const loadChat = useCallback((userId: string, fecha: string) => {
     setSelectedUser(userId);
     setSelectedFecha(fecha);
@@ -268,6 +325,7 @@ export default function Home() {
     setLoadingChat(true);
     setErrorChat(null);
     setLinkCopied(false);
+    setPauseStatus(null);
     if (typeof window !== "undefined") {
       window.history.replaceState(null, "", `?chat=${encodeURIComponent(userId)}&fecha=${encodeURIComponent(fecha)}`);
     }
@@ -282,7 +340,105 @@ export default function Home() {
       })
       .catch(() => setErrorChat("No se pudo cargar el chat"))
       .finally(() => setLoadingChat(false));
-  }, []);
+    loadPauseStatus(userId);
+  }, [loadPauseStatus]);
+
+  const sendHumanMessage = useCallback(async () => {
+    if (!selectedUser || !humanInput.trim() || humanSending) return;
+    setHumanSending(true);
+    setHumanError(null);
+    const text = humanInput.trim();
+    try {
+      const r = await fetch(`${API_BASE}/chat/user/${selectedUser}/human-message`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: text }),
+      });
+      const data = await r.json();
+      if (data?.success) {
+        setHumanInput("");
+        if (selectedFecha) loadChat(selectedUser, selectedFecha);
+      } else {
+        setHumanError(data?.error || "No se pudo enviar el mensaje");
+      }
+    } catch {
+      setHumanError("Error de conexión con la API");
+    } finally {
+      setHumanSending(false);
+    }
+  }, [selectedUser, selectedFecha, humanInput, humanSending, loadChat]);
+
+  // WebSocket en tiempo real: user-message, human-message, pause-status
+  useEffect(() => {
+    if (!selectedUser) {
+      wsRef.current?.close();
+      wsRef.current = null;
+      return;
+    }
+
+    let mounted = true;
+    let ws: WebSocket | null = null;
+
+    const connect = () => {
+      try {
+        ws = new WebSocket(WS_URL);
+      } catch {
+        return;
+      }
+      wsRef.current = ws;
+
+      ws.onopen = () => {
+        ws?.send(JSON.stringify({ event: "subscribe", data: { chat_id: selectedUser } }));
+      };
+
+      ws.onmessage = (ev) => {
+        if (!mounted) return;
+        try {
+          const msg = JSON.parse(ev.data) as {
+            event?: string;
+            data?: { role?: string; content?: unknown; paused?: boolean };
+          };
+          if (msg.event === "user-message") {
+            if (selectedFecha) loadChat(selectedUser, selectedFecha);
+            const preview =
+              typeof msg.data?.content === "string"
+                ? msg.data.content.slice(0, 60)
+                : "Nuevo mensaje del usuario";
+            setNewMessageNotice(`💬 Usuario: ${preview}${preview.length >= 60 ? "…" : ""}`);
+            setTimeout(() => setNewMessageNotice(null), 5000);
+          } else if (msg.event === "human-message") {
+            if (selectedFecha) loadChat(selectedUser, selectedFecha);
+          } else if (msg.event === "pause-status") {
+            loadPauseStatus(selectedUser);
+          }
+        } catch {
+          /* ignore */
+        }
+      };
+
+      ws.onclose = () => {
+        if (!mounted) return;
+        wsReconnectRef.current = setTimeout(connect, 3000);
+      };
+
+      ws.onerror = () => {
+        ws?.close();
+      };
+    };
+
+    connect();
+
+    return () => {
+      mounted = false;
+      if (wsReconnectRef.current) clearTimeout(wsReconnectRef.current);
+      try {
+        ws?.send(JSON.stringify({ event: "unsubscribe", data: { chat_id: selectedUser } }));
+      } catch {
+        /* ignore */
+      }
+      ws?.close();
+    };
+  }, [selectedUser, selectedFecha, loadChat, loadPauseStatus]);
 
   useEffect(() => {
     if (isAuthenticated && !urlParamsHandled.current) {
@@ -324,7 +480,7 @@ export default function Home() {
   // ── Knowledge ──
   const loadKnowledge = useCallback(() => {
     setLoadingKnowledge(true);
-    fetch("https://agente.apidoctorrecetas.com/api/chat/conocimiento")
+    fetch(`${API_BASE}/chat/conocimiento`)
       .then(r => r.json())
       .then(data => {
         if (Array.isArray(data)) setKnowledgeList(data);
@@ -343,7 +499,7 @@ export default function Home() {
     if (!newPregunta.trim() || !newRespuesta.trim()) return;
     setSavingKnowledge(true);
     try {
-      const res = await fetch("https://agente.apidoctorrecetas.com/api/chat/conocimiento", {
+      const res = await fetch(`${API_BASE}/chat/conocimiento`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ pregunta: newPregunta.trim(), respuesta: newRespuesta.trim() }),
@@ -359,7 +515,7 @@ export default function Home() {
     if (!messages.length || !selectedUser || !selectedFecha) return;
     const lines = [
       `╔═══════════════════════════════════════╗`,
-      `   EXPORTACIÓN DE CHAT — Dr. Recetas    `,
+      `   EXPORTACIÓN DE CHAT — Islanmed   `,
       `╚═══════════════════════════════════════╝`,
       ``,
       `Chat ID  : ${selectedUser}`,
@@ -387,7 +543,7 @@ export default function Home() {
     setExportDropdownOpen(false);
     const lines = [
       `╔═══════════════════════════════════════╗`,
-      `   EXPORTACIÓN POR FECHA — Dr. Recetas  `,
+      `   EXPORTACIÓN POR FECHA — Islanmed   `,
       `╚═══════════════════════════════════════╝`,
       ``,
       `Fecha          : ${formatDate(fecha)} (${fecha})`,
@@ -841,8 +997,31 @@ export default function Home() {
                       )}
                     </div>
                     {/* Action buttons */}
-                    {!loadingChat && messages.length > 0 && (
+                    {!loadingChat && (
                       <div className="flex items-center gap-1.5 shrink-0 flex-wrap justify-end">
+                        <button
+                          onClick={togglePause}
+                          disabled={pauseLoading}
+                          title={pauseStatus?.paused ? "Devolver la conversación al bot" : "Tomar la conversación (la IA dejará de responder)"}
+                          className={`flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium border rounded-lg transition-colors disabled:opacity-60
+                            ${pauseStatus?.paused
+                              ? "bg-slate-100 border-slate-400 text-slate-700 hover:bg-slate-200"
+                              : "bg-white border-slate-200 text-slate-500 hover:bg-[#F2FAEC]"}`}>
+                          {pauseLoading ? (
+                            <div className="w-3.5 h-3.5 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                          ) : pauseStatus?.paused ? (
+                            <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" viewBox="0 0 20 20" fill="currentColor">
+                              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clipRule="evenodd" />
+                            </svg>
+                          ) : (
+                            <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" viewBox="0 0 20 20" fill="currentColor">
+                              <path d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" />
+                            </svg>
+                          )}
+                          <span className="hidden sm:inline">{pauseStatus?.paused ? "Devolver al Agente" : "Tomar conversación"}</span>
+                        </button>
+                        {messages.length > 0 && (
+                        <>
                         <button
                           onClick={() => { navigator.clipboard.writeText(window.location.href); setLinkCopied(true); setTimeout(() => setLinkCopied(false), 2000); }}
                           className={`flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium border rounded-lg transition-colors
@@ -868,10 +1047,40 @@ export default function Home() {
                           </svg>
                           <span className="hidden sm:inline">Resumen</span>
                         </button>
+                        </>
+                        )}
                       </div>
                     )}
                   </div>
                 </div>
+
+                {newMessageNotice && (
+                  <div className="fixed top-20 right-4 z-50 max-w-xs bg-[#467173] text-white text-xs font-medium px-4 py-3 rounded-xl shadow-lg flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-white animate-pulse shrink-0" />
+                    <span className="truncate">{newMessageNotice}</span>
+                  </div>
+                )}
+
+                {/* Paused banner */}
+                {pauseStatus?.paused && (
+                  <div className="bg-slate-100 border-b border-slate-300 px-5 py-2.5 shrink-0 flex items-center gap-2 text-slate-700">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 shrink-0" viewBox="0 0 20 20" fill="currentColor">
+                      <path d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" />
+                    </svg>
+                    <span className="text-xs font-medium">
+                      <strong>Tú estás a cargo</strong> de esta conversación{pauseStatus.pausado_en ? ` desde ${new Date(pauseStatus.pausado_en).toLocaleString("es-MX", { dateStyle: "short", timeStyle: "short" })}` : ""}. La IA no responderá hasta que la devuelvas.
+                    </span>
+                    <button onClick={togglePause} disabled={pauseLoading}
+                      className="ml-auto text-xs font-semibold text-[#467173] hover:text-[#355759] underline underline-offset-2 disabled:opacity-50 whitespace-nowrap">
+                      Devolver al bot
+                    </button>
+                  </div>
+                )}
+                {pauseError && (
+                  <div className="bg-red-50 border-b border-red-200 px-5 py-2 shrink-0 text-xs text-red-700">
+                    {pauseError}
+                  </div>
+                )}
 
                 {/* Messages thread */}
                 <div className="flex-1 overflow-y-auto">
@@ -898,15 +1107,34 @@ export default function Home() {
                     ) : (
                       messages.map((msg, i) => {
                         const isUser = roleIsUser(msg.role);
+                        const isHuman = roleIsHuman(msg.role);
+                        const isBot = roleIsBot(msg.role);
                         const text = extractText(msg.content).trim();
                         if (!text) return null;
-                        const botHtml = !isUser ? DOMPurify.sanitize(marked.parse(text) as string) : null;
+                        const botHtml = isBot ? DOMPurify.sanitize(marked.parse(text) as string) : null;
                         return (
                           <div key={i} className={`flex items-end gap-2.5 ${isUser ? "justify-end" : "justify-start"}`}>
                             {!isUser && (
-                              <div className="w-7 h-7 rounded-full bg-gradient-to-br from-emerald-400 to-teal-500 text-white text-[10px] font-bold flex items-center justify-center shrink-0 mb-0.5 shadow-sm">DR</div>
+                              <div className={`w-7 h-7 rounded-full text-white text-[10px] font-bold flex items-center justify-center shrink-0 mb-0.5 shadow-sm ${
+                                isHuman ? "bg-slate-700" : "bg-gradient-to-br from-emerald-400 to-teal-500"
+                              }`}>
+                                {isHuman ? (
+                                  <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
+                                  </svg>
+                                ) : (
+                                  "DR"
+                                )}
+                              </div>
                             )}
                             <div className={`max-w-[80%] md:max-w-[70%] flex flex-col gap-1 ${isUser ? "items-end" : "items-start"}`}>
+                              {(isHuman || isBot) && (
+                                <span className={`text-[10px] font-semibold uppercase tracking-wider px-1 ${
+                                  isHuman ? "text-slate-600" : "text-emerald-600"
+                                }`}>
+                                  {roleLabel(msg.role)}
+                                </span>
+                              )}
                               {botHtml ? (
                                 <div
                                   className="prose prose-sm prose-slate max-w-none px-4 py-3 rounded-2xl rounded-bl-sm bg-white border border-slate-200 shadow-sm
@@ -921,8 +1149,13 @@ export default function Home() {
                                   dangerouslySetInnerHTML={{ __html: botHtml }}
                                 />
                               ) : (
-                                <div className={`px-4 py-3 rounded-2xl text-sm leading-relaxed whitespace-pre-wrap
-                                  ${isUser ? "bg-[#467173] text-white rounded-br-sm shadow-sm" : "bg-white border border-slate-200 text-slate-800 rounded-bl-sm shadow-sm"}`}>
+                                <div className={`px-4 py-3 rounded-2xl text-sm leading-relaxed whitespace-pre-wrap ${
+                                  isUser
+                                    ? "bg-[#467173] text-white rounded-br-sm shadow-sm"
+                                    : isHuman
+                                    ? "bg-slate-700 text-white rounded-bl-sm shadow-sm"
+                                    : "bg-white border border-slate-200 text-slate-800 rounded-bl-sm shadow-sm"
+                                }`}>
                                   {text}
                                 </div>
                               )}
@@ -933,7 +1166,7 @@ export default function Home() {
                               )}
                             </div>
                             {isUser && (
-                              <div className="w-7 h-7 rounded-full bg-slate-200 text-slate-500 text-[10px] font-bold flex items-center justify-center shrink-0 mb-0.5">U</div>
+                              <div className="w-7 h-7 rounded-full bg-[#467173] text-white text-[10px] font-bold flex items-center justify-center shrink-0 mb-0.5">U</div>
                             )}
                           </div>
                         );
@@ -941,6 +1174,57 @@ export default function Home() {
                     )}
                   </div>
                 </div>
+
+                {/* Human takeover input — visible solo cuando el humano tomó la conversación */}
+                {pauseStatus?.paused && (
+                  <div className="bg-slate-50 border-t border-slate-200 px-4 md:px-6 py-3 shrink-0">
+                    <form
+                      className="max-w-3xl mx-auto"
+                      onSubmit={(e) => {
+                        e.preventDefault();
+                        sendHumanMessage();
+                      }}
+                    >
+                      <div className="flex items-center gap-2 px-4 py-1.5 rounded-full bg-white border border-slate-300 focus-within:ring-2 focus-within:ring-[#467173] focus-within:border-transparent transition">
+                        <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 shrink-0 select-none">
+                          Humano
+                        </span>
+                        <span className="w-px h-5 bg-slate-200 shrink-0" />
+                        <textarea
+                          value={humanInput}
+                          onChange={(e) => { setHumanInput(e.target.value); setHumanError(null); }}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter" && !e.shiftKey) {
+                              e.preventDefault();
+                              if (humanInput.trim() && !humanSending) sendHumanMessage();
+                            }
+                          }}
+                          disabled={humanSending}
+                          placeholder="Escribe una respuesta…"
+                          rows={1}
+                          className="flex-1 resize-none bg-transparent text-sm text-slate-900 placeholder-slate-400 outline-none border-none focus:ring-0 focus:outline-none px-1 py-2 disabled:opacity-60"
+                          style={{ minHeight: 0 }}
+                        />
+                        <button
+                          type="submit"
+                          disabled={humanSending || !humanInput.trim()}
+                          className="h-8 w-8 rounded-full flex items-center justify-center text-white bg-[#467173] hover:bg-[#355759] disabled:bg-slate-300 disabled:cursor-not-allowed transition-all active:scale-90 shrink-0"
+                        >
+                          {humanSending ? (
+                            <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                          ) : (
+                            <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" viewBox="0 0 20 20" fill="currentColor">
+                              <path d="M3.105 2.289a.75.75 0 00-.826.95l1.414 4.925A1.5 1.5 0 005.135 9.25H10a.75.75 0 010 1.5H5.135a1.5 1.5 0 00-1.442 1.086l-1.414 4.926a.75.75 0 00.826.95 28.897 28.897 0 0015.293-7.155.75.75 0 000-1.114A28.897 28.897 0 003.105 2.289z" />
+                            </svg>
+                          )}
+                        </button>
+                      </div>
+                      {humanError && (
+                        <p className="mt-1.5 text-xs text-red-600 text-center">{humanError}</p>
+                      )}
+                    </form>
+                  </div>
+                )}
               </>
             )}
           </main>
@@ -1010,7 +1294,7 @@ export default function Home() {
                   let anonId = localStorage.getItem("dr-recetas-sim-id");
                   if (!anonId) { anonId = `${Math.floor(Math.random() * 1000000000)}_${Date.now()}`; localStorage.setItem("dr-recetas-sim-id", anonId); }
                   const rawAnonId = anonId.replace(/[^0-9]/g, "").substring(0, 10);
-                  const response = await fetch("https://agente.apidoctorrecetas.com/api/chat", {
+                  const response = await fetch(`${API_BASE}/chat`, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ chat_id: Number(rawAnonId), message: text.trim() }),
