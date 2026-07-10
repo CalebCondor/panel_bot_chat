@@ -387,6 +387,7 @@ export default function Home() {
       }
       wsRef.current = ws;
 
+      
       ws.onopen = () => {
         ws?.send(JSON.stringify({ event: "subscribe", data: { chat_id: selectedUser } }));
       };
