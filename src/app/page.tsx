@@ -107,7 +107,7 @@ function toPlainText(markdown: string): string {
 function roleLabel(role: string): string {
   if (role === "user") return "Usuario";
   if (role === "human") return "Soporte";
-  if (role === "ai" || role === "assistant") return "Dr. Recetas";
+  if (role === "ai" || role === "assistant") return "Islandmed";
   return role;
 }
 
@@ -1124,7 +1124,7 @@ export default function Home() {
                                     <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
                                   </svg>
                                 ) : (
-                                  "DR"
+                                  "IS"
                                 )}
                               </div>
                             )}
