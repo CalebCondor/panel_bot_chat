@@ -42,7 +42,7 @@ export default function LoginPage() {
         {/* Top brand band */}
         <div className="flex flex-col items-center justify-center gap-2 bg-[#467173] px-6 py-5">
           <img
-            src="https://islandmedpr.com/assets/images/logo-islandmed.png"
+            src="https://tulicenciapr.com/assets/images/theme/logo.png?v=1785775381"
             alt="Doctor Recetas"
             className="h-10 w-auto object-contain select-none brightness-0 invert"
           />

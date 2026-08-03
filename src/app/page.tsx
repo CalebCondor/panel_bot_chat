@@ -107,7 +107,7 @@ function toPlainText(markdown: string): string {
 function roleLabel(role: string): string {
   if (role === "user") return "Usuario";
   if (role === "human") return "Soporte";
-  if (role === "ai" || role === "assistant") return "Islandmed";
+  if (role === "ai" || role === "assistant") return "Tu licencia";
   return role;
 }
 
@@ -671,7 +671,7 @@ export default function Home() {
         <div className="flex items-center gap-3">
           {/* Logo */}
           <img
-            src="https://islandmedpr.com/assets/images/logo-islandmed.png"
+            src="https://tulicenciapr.com/assets/images/theme/logoFooters.svg?v=1785775560"
             alt="Islandmed"
             className="h-9 w-auto object-contain select-none"
           />
@@ -1414,7 +1414,7 @@ export default function Home() {
       {/* ── Footer ── */}
       <footer className="shrink-0 bg-white border-t border-slate-200 py-2.5">
         <p className="text-center text-[11px] text-slate-400">
-          <span className="font-semibold text-[#467173]">Islanmed</span>
+          <span className="font-semibold text-[#467173]">Tu licencia</span>
           <span className="mx-1.5 text-slate-300">·</span>
           Agente IA · Panel CRM
           <span className="mx-2 text-slate-300">|</span>

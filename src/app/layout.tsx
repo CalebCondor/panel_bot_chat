@@ -13,7 +13,7 @@ const poppins = Poppins({
 });
 
 export const metadata: Metadata = {
-  title: "Islamed — Panel",
+  title: "Tu Licencia — Panel",
   description: "Panel de conversaciones del agente Islamed",
 };
 
