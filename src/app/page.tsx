@@ -83,7 +83,7 @@ type Message = {
   created_at?: string;
   [key: string]: unknown;
 };
-type UserEntry = { chat_id: string; fechas: string[] };
+type UserEntry = { chat_id: string; fechas: string[]; ultima_actividad?: string; inicio_conversacion?: string };
 type UsersResponse = { success: boolean; total: number; user_ids: UserEntry[] };
 type UserChatResponse = { success: boolean; chat_id: number; total: number; messages: Message[] };
 
@@ -123,6 +123,18 @@ function formatDate(dateStr: string): string {
 function formatDateShort(dateStr: string): string {
   const [year, month, day] = dateStr.split("-").map(Number);
   return new Date(year, month - 1, day).toLocaleDateString("es-MX", { day: "numeric", month: "short" });
+}
+
+function formatTimeShort(iso?: string): string {
+  if (!iso) return "";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "";
+  return d.toLocaleTimeString("es-PR", {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: true,
+    timeZone: "America/Puerto_Rico",
+  });
 }
 
 function downloadFile(filename: string, content: string) {
@@ -227,7 +239,7 @@ export default function Home() {
   const chatListEntries = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
     const sorted = [...datesWithChats].sort((a, b) => b.localeCompare(a));
-    const entries: { chatId: string; fecha: string; idx: number }[] = [];
+    const entries: { chatId: string; fecha: string; idx: number; inicio?: string; ultima?: string }[] = [];
     let n = 0;
     for (const fecha of sorted) {
       if (selectedCalDate && fecha !== selectedCalDate) continue;
@@ -236,7 +248,7 @@ export default function Home() {
       );
       for (const u of users) {
         n++;
-        entries.push({ chatId: u.chat_id, fecha, idx: n });
+        entries.push({ chatId: u.chat_id, fecha, idx: n, inicio: u.inicio_conversacion, ultima: u.ultima_actividad });
       }
     }
     return entries;
@@ -265,10 +277,17 @@ export default function Home() {
 
   // ── Data fetching ──
   useEffect(() => {
-    fetch(`${API_BASE}/chat/users`)
+    fetch(`${API_BASE}/chat/users`, { cache: "no-store" })
       .then(r => r.json())
       .then((data: UsersResponse) => {
-        if (data.success) setUserIds(data.user_ids);
+        if (data.success) {
+          const sorted = [...data.user_ids].sort((a, b) => {
+            const ta = a.ultima_actividad ? new Date(a.ultima_actividad).getTime() : 0;
+            const tb = b.ultima_actividad ? new Date(b.ultima_actividad).getTime() : 0;
+            return tb - ta;
+          });
+          setUserIds(sorted);
+        }
         else setErrorUsers("Error al cargar usuarios");
       })
       .catch(() => setErrorUsers("No se pudo conectar con la API"))
@@ -617,9 +636,11 @@ export default function Home() {
   }
 
   // ── Chat list row (reusable render) ──
-  const renderChatRow = (entry: { chatId: string; fecha: string; idx: number }, showDate = false) => {
+  const renderChatRow = (entry: { chatId: string; fecha: string; idx: number; inicio?: string; ultima?: string }, showDate = false) => {
     const isActive = selectedUser === entry.chatId && selectedFecha === entry.fecha;
     const delKey = `${entry.chatId}|${entry.fecha}`;
+    const inicioTime = formatTimeShort(entry.inicio);
+    const ultimaTime = formatTimeShort(entry.ultima);
     return (
       <div
         key={delKey}
@@ -639,6 +660,7 @@ export default function Home() {
               {showDate && <span className="text-[10px] text-slate-400 shrink-0">{formatDateShort(entry.fecha)}</span>}
             </div>
             <p className="text-xs text-slate-400 truncate mt-0.5 font-mono">#{entry.chatId.slice(-8)}</p>
+           
           </div>
         </button>
         {confirmDelete?.chatId === entry.chatId && confirmDelete?.fecha === entry.fecha ? (
