@@ -199,7 +199,7 @@ export default function Home() {
 
   // ── Chat simulator state ──
   const [simMessages, setSimMessages] = useState<{ role: "user" | "bot"; text: string }[]>([
-    { role: "bot", text: "¡Hola! Soy el simulador de Dr. Recetas. ¿En qué te puedo ayudar hoy?" },
+    { role: "bot", text: "¡Hola! Soy el simulador de Tu Licencia. ¿En qué te puedo ayudar hoy?" },
   ]);
   const [simInput, setSimInput] = useState("");
   const [simIsLoading, setSimIsLoading] = useState(false);
