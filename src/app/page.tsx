@@ -553,7 +553,11 @@ export default function Home() {
     try {
       const res = await fetch(`${API_BASE}/chat/conocimiento/${id}`, { method: "DELETE" });
       if (res.ok) loadKnowledge();
-      else alert("Error al eliminar conocimiento");
+      else {
+        const text = await res.text().catch(() => "");
+        console.error(`[delete knowledge ${id}] ${res.status}:`, text);
+        alert(`Error al eliminar conocimiento (HTTP ${res.status}).\n${text || "Sin detalle del servidor."}`);
+      }
     } catch (err) { console.error(err); alert("Error de conexión"); }
   };
 
