@@ -211,6 +211,11 @@ export default function Home() {
   const [newPregunta, setNewPregunta] = useState("");
   const [newRespuesta, setNewRespuesta] = useState("");
   const [savingKnowledge, setSavingKnowledge] = useState(false);
+  const [editingKnowledge, setEditingKnowledge] = useState<KnowledgeEntry | null>(null);
+  const [editPregunta, setEditPregunta] = useState("");
+  const [editRespuesta, setEditRespuesta] = useState("");
+  const [savingEditKnowledge, setSavingEditKnowledge] = useState(false);
+  const [deletingKnowledgeId, setDeletingKnowledgeId] = useState<number | null>(null);
 
   // ── Derived state ──
   const datesWithChats = useMemo(() => {
@@ -509,6 +514,43 @@ export default function Home() {
       else alert("Error al guardar conocimiento");
     } catch (err) { console.error(err); alert("Error de conexión"); }
     finally { setSavingKnowledge(false); }
+  };
+
+  const openEditKnowledgeModal = (k: KnowledgeEntry) => {
+    setEditingKnowledge(k);
+    setEditPregunta(k.pregunta);
+    setEditRespuesta(k.respuesta);
+  };
+
+  const closeEditKnowledgeModal = () => {
+    setEditingKnowledge(null);
+    setEditPregunta("");
+    setEditRespuesta("");
+  };
+
+  const handleEditKnowledge = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingKnowledge) return;
+    if (!editPregunta.trim() || !editRespuesta.trim()) return;
+    setSavingEditKnowledge(true);
+    try {
+      const res = await fetch(`${API_BASE}/chat/conocimiento/${editingKnowledge.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ pregunta: editPregunta.trim(), respuesta: editRespuesta.trim() }),
+      });
+      if (res.ok) { closeEditKnowledgeModal(); loadKnowledge(); }
+      else alert("Error al actualizar conocimiento");
+    } catch (err) { console.error(err); alert("Error de conexión"); }
+    finally { setSavingEditKnowledge(false); }
+  };
+
+  const handleDeleteKnowledge = async (id: number) => {
+    try {
+      const res = await fetch(`${API_BASE}/chat/conocimiento/${id}`, { method: "DELETE" });
+      if (res.ok) loadKnowledge();
+      else alert("Error al eliminar conocimiento");
+    } catch (err) { console.error(err); alert("Error de conexión"); }
   };
 
   // ── Export functions ──
@@ -1342,25 +1384,58 @@ export default function Home() {
           </div>
           <div className="flex-1 overflow-y-auto w-full max-w-7xl mx-auto p-4 md:p-6">
             <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden overflow-x-auto">
-              <table className="w-full text-left border-collapse text-sm min-w-[600px]">
+              <table className="w-full text-left border-collapse text-sm min-w-[700px]">
                 <thead className="bg-[#F2FAEC] border-b border-slate-200 text-slate-500">
                   <tr>
                     <th className="px-5 py-3 font-medium w-16 text-center">ID</th>
                     <th className="px-5 py-3 font-medium w-1/3">Consulta / situación</th>
                     <th className="px-5 py-3 font-medium">Respuesta / Instrucción</th>
+                    <th className="px-5 py-3 font-medium w-40 text-center">Acciones</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {loadingKnowledge ? (
-                    <tr><td colSpan={3} className="px-5 py-8 text-center text-slate-400">Cargando conocimiento...</td></tr>
+                    <tr><td colSpan={4} className="px-5 py-8 text-center text-slate-400">Cargando conocimiento...</td></tr>
                   ) : knowledgeList.length === 0 ? (
-                    <tr><td colSpan={3} className="px-5 py-8 text-center text-slate-400">No hay elementos aún.</td></tr>
+                    <tr><td colSpan={4} className="px-5 py-8 text-center text-slate-400">No hay elementos aún.</td></tr>
                   ) : (
                     knowledgeList.map(k => (
                       <tr key={k.id} className="hover:bg-[#F2FAEC] transition-colors">
                         <td className="px-5 py-4 text-center text-slate-400 font-medium">#{k.id}</td>
                         <td className="px-5 py-4 text-slate-800 font-medium align-top leading-relaxed">{k.pregunta}</td>
                         <td className="px-5 py-4 text-slate-600 align-top leading-relaxed">{k.respuesta}</td>
+                        <td className="px-5 py-4 align-top">
+                          <div className="flex items-center justify-center gap-2">
+                            <button
+                              type="button"
+                              onClick={() => openEditKnowledgeModal(k)}
+                              title="Editar"
+                              aria-label={`Editar conocimiento #${k.id}`}
+                              className="inline-flex items-center justify-center w-8 h-8 rounded-lg text-slate-500 bg-white border border-slate-200 hover:bg-amber-50 hover:text-amber-700 hover:border-amber-200 transition-colors"
+                            >
+                              <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 20 20" fill="currentColor">
+                                <path d="M17.414 2.586a2 2 0 00-2.828 0L7 10.172V13h2.828l7.586-7.586a2 2 0 000-2.828z" />
+                                <path fillRule="evenodd" d="M2 6a2 2 0 012-2h4a1 1 0 010 2H4v10h10v-4a1 1 0 112 0v4a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" clipRule="evenodd" />
+                              </svg>
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteKnowledge(k.id)}
+                              disabled={deletingKnowledgeId === k.id}
+                              title="Eliminar"
+                              aria-label={`Eliminar conocimiento #${k.id}`}
+                              className="inline-flex items-center justify-center w-8 h-8 rounded-lg text-slate-500 bg-white border border-slate-200 hover:bg-red-50 hover:text-red-700 hover:border-red-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                              {deletingKnowledgeId === k.id ? (
+                                <div className="w-3.5 h-3.5 border-2 border-slate-300 border-t-red-600 rounded-full animate-spin" />
+                              ) : (
+                                <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 20 20" fill="currentColor">
+                                  <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
+                                </svg>
+                              )}
+                            </button>
+                          </div>
+                        </td>
                       </tr>
                     ))
                   )}
@@ -1405,6 +1480,77 @@ export default function Home() {
                     </button>
                   </div>
                 </form>
+              </div>
+            </div>
+          )}
+
+          {editingKnowledge && (
+            <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
+              <div className="bg-white rounded-2xl shadow-xl w-full max-w-2xl overflow-hidden flex flex-col">
+                <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-[#F2FAEC]/50">
+                  <h3 className="text-base font-semibold text-slate-900">
+                    Editar Conocimiento <span className="text-slate-400 font-normal">#{editingKnowledge.id}</span>
+                  </h3>
+                  <button onClick={closeEditKnowledgeModal} className="text-slate-400 hover:text-slate-600 transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                    </svg>
+                  </button>
+                </div>
+                <form onSubmit={handleEditKnowledge} className="flex flex-col p-6 gap-5">
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-2">Pregunta (Regla o Concepto)</label>
+                    <textarea value={editPregunta} onChange={e => setEditPregunta(e.target.value)} required rows={2}
+                      className="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm text-slate-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none resize-none"
+                      placeholder="Ej. ¿De dónde debo obtener los productos disponibles...?" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-2">Respuesta (Indicación para el Bot)</label>
+                    <textarea value={editRespuesta} onChange={e => setEditRespuesta(e.target.value)} required rows={5}
+                      className="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm text-slate-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none resize-none"
+                      placeholder="Ej. SIEMPRE debo consultar los productos reales disponibles..." />
+                  </div>
+                  <div className="flex flex-col sm:flex-row items-center justify-end gap-3 border-t border-slate-100 pt-5">
+                    <button type="button" onClick={closeEditKnowledgeModal}
+                      className="w-full sm:w-auto px-5 py-2.5 text-sm font-medium text-slate-600 bg-white border border-slate-200 rounded-xl hover:bg-[#F2FAEC] transition-colors">
+                      Cancelar
+                    </button>
+                    <button type="submit" disabled={savingEditKnowledge}
+                      className="flex items-center justify-center gap-2 w-full sm:w-auto px-5 py-2.5 text-sm font-medium text-white bg-blue-600 rounded-xl hover:bg-blue-700 transition-colors disabled:opacity-50">
+                      {savingEditKnowledge && <div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />}
+                      Guardar Cambios
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          )}
+
+          {deletingKnowledgeId !== null && (
+            <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
+              <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden flex flex-col">
+                <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-red-50/50">
+                  <h3 className="text-base font-semibold text-slate-900">Eliminar Conocimiento</h3>
+                  <button onClick={() => setDeletingKnowledgeId(null)} className="text-slate-400 hover:text-slate-600 transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                    </svg>
+                  </button>
+                </div>
+                <div className="p-6 text-sm text-slate-600">
+                  ¿Seguro que quieres eliminar el conocimiento <span className="font-semibold text-slate-800">#{deletingKnowledgeId}</span>? Esta acción no se puede deshacer.
+                </div>
+                <div className="flex flex-col sm:flex-row items-center justify-end gap-3 border-t border-slate-100 px-6 py-4">
+                  <button type="button" onClick={() => setDeletingKnowledgeId(null)}
+                    className="w-full sm:w-auto px-5 py-2.5 text-sm font-medium text-slate-600 bg-white border border-slate-200 rounded-xl hover:bg-[#F2FAEC] transition-colors">
+                    Cancelar
+                  </button>
+                  <button type="button"
+                    onClick={async () => { const id = deletingKnowledgeId; setDeletingKnowledgeId(null); await handleDeleteKnowledge(id); }}
+                    className="w-full sm:w-auto px-5 py-2.5 text-sm font-medium text-white bg-red-600 rounded-xl hover:bg-red-700 transition-colors">
+                    Eliminar
+                  </button>
+                </div>
               </div>
             </div>
           )}
