@@ -540,7 +540,11 @@ export default function Home() {
         body: JSON.stringify({ pregunta: editPregunta.trim(), respuesta: editRespuesta.trim() }),
       });
       if (res.ok) { closeEditKnowledgeModal(); loadKnowledge(); }
-      else alert("Error al actualizar conocimiento");
+      else {
+        const text = await res.text().catch(() => "");
+        console.error(`[edit knowledge ${editingKnowledge.id}] ${res.status}:`, text);
+        alert(`Error al actualizar conocimiento (HTTP ${res.status}).\n${text || "Sin detalle del servidor."}`);
+      }
     } catch (err) { console.error(err); alert("Error de conexión"); }
     finally { setSavingEditKnowledge(false); }
   };
