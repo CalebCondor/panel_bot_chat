@@ -1395,7 +1395,6 @@ export default function Home() {
               <table className="w-full text-left border-collapse text-sm min-w-[700px]">
                 <thead className="bg-[#F2FAEC] border-b border-slate-200 text-slate-500">
                   <tr>
-                    <th className="px-5 py-3 font-medium w-16 text-center">ID</th>
                     <th className="px-5 py-3 font-medium w-1/3">Consulta / situación</th>
                     <th className="px-5 py-3 font-medium">Respuesta / Instrucción</th>
                     <th className="px-5 py-3 font-medium w-40 text-center">Acciones</th>
@@ -1409,7 +1408,7 @@ export default function Home() {
                   ) : (
                     knowledgeList.map(k => (
                       <tr key={k.id} className="hover:bg-[#F2FAEC] transition-colors">
-                        <td className="px-5 py-4 text-center text-slate-400 font-medium">#{k.id}</td>
+                     
                         <td className="px-5 py-4 text-slate-800 font-medium align-top leading-relaxed">{k.pregunta}</td>
                         <td className="px-5 py-4 text-slate-600 align-top leading-relaxed">{k.respuesta}</td>
                         <td className="px-5 py-4 align-top">
