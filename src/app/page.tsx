@@ -1346,8 +1346,8 @@ export default function Home() {
                 <thead className="bg-[#F2FAEC] border-b border-slate-200 text-slate-500">
                   <tr>
                     <th className="px-5 py-3 font-medium w-16 text-center">ID</th>
-                    <th className="px-5 py-3 font-medium w-1/3">Pregunta</th>
-                    <th className="px-5 py-3 font-medium">Respuesta</th>
+                    <th className="px-5 py-3 font-medium w-1/3">Consulta / situación</th>
+                    <th className="px-5 py-3 font-medium">Respuesta / Instrucción</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
