@@ -43,7 +43,7 @@ function toPlainText(markdown: string): string {
 
 function roleLabel(role: string): string {
   if (role === "human" || role === "user") return "Usuario";
-  if (role === "ai" || role === "assistant") return "Retina Care";
+  if (role === "ai" || role === "assistant") return "Islamed";
   return role;
 }
 
@@ -92,7 +92,7 @@ export default function ResumenPage() {
   function buildPlainText(): string {
     if (!chat || !fecha) return "";
     const lines: string[] = [
-      `CONVERSACIÓN — Retina Care`,
+      `CONVERSACIÓN — Islamed`,
       `Chat ID: ${chat}`,
       `Fecha: ${formatDate(fecha)}`,
       `Total de mensajes: ${messages.length}`,
@@ -131,7 +131,7 @@ export default function ResumenPage() {
           </div>
           <div className="min-w-0 flex-1">
             <h1 className="text-sm font-semibold text-zinc-900 truncate">
-              Retina Care — Conversación
+              Islamed — Conversación
             </h1>
             {fecha && (
               <p className="text-xs text-zinc-500 truncate capitalize">{formatDate(fecha)}</p>
