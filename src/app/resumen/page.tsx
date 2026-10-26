@@ -126,7 +126,7 @@ export default function ResumenPage() {
       {/* Header */}
       <header className="sticky top-0 z-10 bg-white border-b border-zinc-200 shadow-sm">
         <div className="max-w-3xl mx-auto px-4 md:px-6 py-4 flex items-center gap-3">
-          <div className="flex items-center justify-center w-9 h-9 rounded-full bg-emerald-500 text-white font-bold text-sm shrink-0">
+          <div className="flex items-center justify-center w-9 h-9 rounded-full bg-brand-deep text-white font-bold text-sm shrink-0">
             IS
           </div>
           <div className="min-w-0 flex-1">
@@ -140,7 +140,7 @@ export default function ResumenPage() {
           {!loading && !error && (
             <button
               onClick={handleCopy}
-              className="flex items-center gap-2 px-4 py-2 text-xs font-medium text-white bg-emerald-500 rounded-lg hover:bg-emerald-600 transition-colors shrink-0"
+              className="flex items-center gap-2 px-4 py-2 text-xs font-medium text-white bg-brand-deep rounded-lg hover:bg-brand-dark transition-colors shrink-0"
             >
               {copied ? (
                 <>
@@ -169,7 +169,7 @@ export default function ResumenPage() {
           <div className="max-w-3xl mx-auto px-4 md:px-6 py-2.5 flex items-center gap-5 text-xs text-zinc-500">
             <span className="font-mono text-zinc-400">ID: {chat}</span>
             <span className="flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-full bg-emerald-400" />
+              <span className="w-2 h-2 rounded-full bg-brand-soft" />
               {userCount} del usuario
             </span>
             <span className="flex items-center gap-1.5">
@@ -184,7 +184,7 @@ export default function ResumenPage() {
       <main className="flex-1 max-w-3xl mx-auto w-full px-4 md:px-6 py-6">
         {loading ? (
           <div className="flex flex-col items-center justify-center py-32 gap-3 text-zinc-400">
-            <div className="w-6 h-6 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
+            <div className="w-6 h-6 border-2 border-brand-deep border-t-transparent rounded-full animate-spin" />
             <p className="text-sm">Cargando conversación…</p>
           </div>
         ) : error ? (
@@ -220,7 +220,7 @@ export default function ResumenPage() {
                     <span className="text-xs text-zinc-400 px-1 flex items-center gap-1.5">
                       <span
                         className={`w-1.5 h-1.5 rounded-full ${
-                          isUser ? "bg-emerald-400" : "bg-blue-400"
+                          isUser ? "bg-brand-soft" : "bg-blue-400"
                         }`}
                       />
                       {roleLabel(msg.role)}
@@ -234,18 +234,18 @@ export default function ResumenPage() {
                         prose-p:text-zinc-700 prose-p:leading-relaxed prose-p:my-1.5
                         prose-headings:font-semibold prose-headings:text-zinc-800
                         prose-strong:text-zinc-800 prose-strong:font-semibold
-                        prose-a:text-emerald-600 prose-a:no-underline hover:prose-a:underline
+                        prose-a:text-brand-text prose-a:no-underline hover:prose-a:underline
                         prose-ul:my-2 prose-ol:my-2 prose-li:my-0.5
-                        prose-code:text-emerald-700 prose-code:bg-emerald-50 prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-code:text-xs prose-code:before:content-none prose-code:after:content-none
+                        prose-code:text-brand-dark prose-code:bg-brand-soft prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-code:text-xs prose-code:before:content-none prose-code:after:content-none
                         prose-pre:bg-zinc-900 prose-pre:text-zinc-100 prose-pre:rounded-xl prose-pre:text-xs
-                        prose-blockquote:border-l-4 prose-blockquote:border-emerald-400 prose-blockquote:text-zinc-500 prose-blockquote:not-italic"
+                        prose-blockquote:border-l-4 prose-blockquote:border-brand-soft prose-blockquote:text-zinc-500 prose-blockquote:not-italic"
                         dangerouslySetInnerHTML={{ __html: botHtml }}
                       />
                     ) : (
                       <div
                         className={`px-4 py-2.5 rounded-2xl text-sm leading-relaxed whitespace-pre-wrap ${
                           isUser
-                            ? "bg-emerald-500 text-white rounded-br-sm"
+                            ? "bg-brand-deep text-white rounded-br-sm"
                             : "bg-white border border-zinc-200 text-zinc-800 rounded-bl-sm shadow-sm"
                         }`}
                       >
@@ -270,7 +270,7 @@ export default function ResumenPage() {
             </p>
             <button
               onClick={handleCopy}
-              className="flex items-center gap-2 px-4 py-2 text-xs font-medium text-white bg-emerald-500 rounded-lg hover:bg-emerald-600 transition-colors shrink-0"
+              className="flex items-center gap-2 px-4 py-2 text-xs font-medium text-white bg-brand-deep rounded-lg hover:bg-brand-dark transition-colors shrink-0"
             >
               {copied ? "¡Copiado!" : "Copiar conversación completa"}
             </button>

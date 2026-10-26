@@ -62,10 +62,10 @@ function MiniCalendar({
               key={i}
               onClick={() => hasChats && onSelect(isSel ? null : ds)}
               className={`relative mx-auto w-8 h-8 flex flex-col items-center justify-center rounded-lg text-xs font-medium transition-all
-                ${isSel ? "bg-[#467173] text-white shadow-sm" : isToday && hasChats ? "bg-[#F2FAEC] text-[#467173] ring-1 ring-[#D9EFB5]" : isToday ? "bg-[#F2FAEC] text-slate-500 ring-1 ring-slate-200" : hasChats ? "text-slate-800 hover:bg-[#D9EFB5] hover:text-[#467173]" : "text-slate-300 cursor-default"}`}
+                ${isSel ? "bg-brand-deep text-white shadow-sm" : isToday && hasChats ? "bg-brand-soft text-brand-text ring-1 ring-brand-soft" : isToday ? "bg-brand-soft text-slate-500 ring-1 ring-slate-200" : hasChats ? "text-slate-800 hover:bg-brand-soft hover:text-brand-text" : "text-slate-300 cursor-default"}`}
             >
               {day}
-              {hasChats && !isSel && <span className="absolute bottom-0.5 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-[#467173]" />}
+              {hasChats && !isSel && <span className="absolute bottom-0.5 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-brand-deep" />}
             </button>
           );
         })} 
@@ -620,7 +620,7 @@ export default function Home() {
   if (!isAuthenticated) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-100">
-        <div className="w-6 h-6 border-2 border-[#467173] border-t-transparent rounded-full animate-spin" />
+        <div className="w-6 h-6 border-2 border-brand border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
@@ -635,16 +635,16 @@ export default function Home() {
       <div
         key={delKey}
         className={`group flex items-center border-b border-slate-100 transition-colors
-          ${isActive ? "bg-[#F2FAEC] border-l-[3px] border-l-emerald-500" : "hover:bg-[#F2FAEC] border-l-[3px] border-l-transparent"}`}
+          ${isActive ? "bg-brand-soft border-l-[3px] border-l-brand-deep" : "hover:bg-brand-soft border-l-[3px] border-l-transparent"}`}
       >
         <button onClick={() => loadChat(entry.chatId, entry.fecha)} className="flex items-center gap-3 flex-1 min-w-0 px-4 py-3.5 text-left">
           <div className={`flex items-center justify-center w-9 h-9 rounded-xl text-xs font-bold shrink-0
-            ${isActive ? "bg-[#467173] text-white shadow-sm shadow-[#D9EFB5]" : "bg-gradient-to-br from-slate-100 to-slate-200 text-slate-600"}`}>
+            ${isActive ? "bg-brand-deep text-white shadow-sm shadow-brand-soft" : "bg-gradient-to-br from-slate-100 to-slate-200 text-slate-600"}`}>
             {entry.idx}
           </div>
           <div className="min-w-0 flex-1">
             <div className="flex items-center justify-between gap-1">
-              <p className={`text-sm font-semibold truncate ${isActive ? "text-[#2d4f51]" : "text-slate-800"}`}>
+              <p className={`text-sm font-semibold truncate ${isActive ? "text-brand-dark" : "text-slate-800"}`}>
                 Conversación {entry.idx}
               </p>
               {showDate && <span className="text-[10px] text-slate-400 shrink-0">{formatDateShort(entry.fecha)}</span>}
@@ -677,7 +677,7 @@ export default function Home() {
   };
 
   return (
-    <div className="flex flex-col h-screen bg-[#F2FAEC]">
+    <div className="flex flex-col h-screen bg-brand-soft">
       {/* ── Header ── */}
       <header className="flex items-center gap-3 px-4 md:px-6 py-3 bg-white border-b border-slate-200 shrink-0 shadow-sm z-10">
         <div className="flex items-center gap-3">
@@ -741,16 +741,16 @@ export default function Home() {
             onClick={() => setCurrentTab(id)}
             className={`relative flex items-center gap-2 px-6 py-3.5 text-sm font-semibold transition-all whitespace-nowrap
               ${currentTab === id
-                ? "text-[#467173] after:absolute after:bottom-0 after:left-3 after:right-3 after:h-0.5 after:bg-[#467173] after:rounded-full"
+                ? "text-brand-text after:absolute after:bottom-0 after:left-3 after:right-3 after:h-0.5 after:bg-brand-deep after:rounded-full"
                 : "text-slate-400 hover:text-slate-600"
               }`}
           >
-            <span className={`transition-colors ${currentTab === id ? "text-[#467173]" : "text-slate-400"}`}>
+            <span className={`transition-colors ${currentTab === id ? "text-brand-text" : "text-slate-400"}`}>
               {icon}
             </span>
             {label}
             {currentTab === id && (
-              <span className="absolute top-2 right-2 w-1.5 h-1.5 rounded-full bg-[#467173]" />
+              <span className="absolute top-2 right-2 w-1.5 h-1.5 rounded-full bg-brand-deep" />
             )}
           </button>
         ))}
@@ -782,13 +782,13 @@ export default function Home() {
             />
 
             {/* Stats */}
-            <div className="mx-3 my-2 p-3 rounded-xl bg-[#F2FAEC] border border-slate-100 space-y-2.5">
+            <div className="mx-3 my-2 p-3 rounded-xl bg-brand-soft border border-slate-100 space-y-2.5">
               <h3 className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest">Estadísticas</h3>
               {[
                 { label: "Usuarios únicos", value: userIds.length, color: "text-slate-800" },
                 { label: "Sesiones totales", value: totalConversations, color: "text-slate-800" },
                 { label: "Días con actividad", value: datesWithChats.size, color: "text-slate-800" },
-                ...(selectedCalDate ? [{ label: "Chats en fecha", value: chatListEntries.length, color: "text-[#467173]" }] : []),
+                ...(selectedCalDate ? [{ label: "Chats en fecha", value: chatListEntries.length, color: "text-brand-text" }] : []),
               ].map(s => (
                 <div key={s.label} className="flex items-center justify-between">
                   <span className="text-xs text-slate-500">{s.label}</span>
@@ -802,7 +802,7 @@ export default function Home() {
               <h3 className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest px-1 mb-2 mt-1">Exportar</h3>
               {selectedCalDate && (
                 <button onClick={() => exportByDate(selectedCalDate)} disabled={exportingBulk}
-                  className="w-full flex items-center gap-2 px-3 py-2 text-xs font-medium text-[#467173] bg-[#F2FAEC] hover:bg-[#c8e49a] border border-[#D9EFB5] rounded-xl transition-colors disabled:opacity-50">
+                  className="w-full flex items-center gap-2 px-3 py-2 text-xs font-medium text-brand-text bg-brand-soft hover:bg-blue-200 border border-brand-soft rounded-xl transition-colors disabled:opacity-50">
                   <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5 shrink-0" viewBox="0 0 20 20" fill="currentColor">
                     <path fillRule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clipRule="evenodd" />
                   </svg>
@@ -810,7 +810,7 @@ export default function Home() {
                 </button>
               )}
               <button onClick={exportAllChats} disabled={exportingBulk}
-                className="w-full flex items-center gap-2 px-3 py-2 text-xs font-medium text-slate-600 bg-[#F2FAEC] hover:bg-slate-100 border border-slate-200 rounded-xl transition-colors disabled:opacity-50">
+                className="w-full flex items-center gap-2 px-3 py-2 text-xs font-medium text-slate-600 bg-brand-soft hover:bg-slate-100 border border-slate-200 rounded-xl transition-colors disabled:opacity-50">
                 <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5 shrink-0" viewBox="0 0 20 20" fill="currentColor">
                   <path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clipRule="evenodd" />
                 </svg>
@@ -833,7 +833,7 @@ export default function Home() {
                 <div className="flex items-center gap-2">
                   <h2 className="text-sm font-bold text-slate-800">Conversaciones</h2>
                   <span className={`text-xs font-bold px-2 py-0.5 rounded-full
-                    ${selectedCalDate ? "bg-[#D9EFB5] text-[#467173]" : "bg-slate-100 text-slate-600"}`}>
+                    ${selectedCalDate ? "bg-brand-soft text-brand-text" : "bg-slate-100 text-slate-600"}`}>
                     {chatListEntries.length}
                   </span>
                 </div>
@@ -841,7 +841,7 @@ export default function Home() {
                 {/* Export dropdown */}
                 <div className="relative">
                   <button onClick={() => setExportDropdownOpen(o => !o)}
-                    className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-slate-500 hover:text-slate-700 bg-[#F2FAEC] hover:bg-slate-100 border border-slate-200 rounded-lg transition-colors">
+                    className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-slate-500 hover:text-slate-700 bg-brand-soft hover:bg-slate-100 border border-slate-200 rounded-lg transition-colors">
                     <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" viewBox="0 0 20 20" fill="currentColor">
                       <path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clipRule="evenodd" />
                     </svg>
@@ -852,8 +852,8 @@ export default function Home() {
                       <div className="fixed inset-0 z-30" onClick={() => setExportDropdownOpen(false)} />
                       <div className="absolute right-0 top-full mt-1 w-56 bg-white border border-slate-200 rounded-xl shadow-xl z-40 py-1 overflow-hidden">
                         {selectedUser && selectedFecha && (
-                          <button onClick={exportCurrentChat} className="w-full flex items-start gap-2.5 px-4 py-2.5 text-left hover:bg-[#F2FAEC] transition-colors">
-                            <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-[#467173] mt-0.5 shrink-0" viewBox="0 0 20 20" fill="currentColor">
+                          <button onClick={exportCurrentChat} className="w-full flex items-start gap-2.5 px-4 py-2.5 text-left hover:bg-brand-soft transition-colors">
+                            <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-brand-text mt-0.5 shrink-0" viewBox="0 0 20 20" fill="currentColor">
                               <path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clipRule="evenodd" />
                             </svg>
                             <div>
@@ -864,7 +864,7 @@ export default function Home() {
                         )}
                         {selectedCalDate && (
                           <button onClick={() => exportByDate(selectedCalDate)} disabled={exportingBulk}
-                            className="w-full flex items-start gap-2.5 px-4 py-2.5 text-left hover:bg-[#F2FAEC] transition-colors disabled:opacity-50">
+                            className="w-full flex items-start gap-2.5 px-4 py-2.5 text-left hover:bg-brand-soft transition-colors disabled:opacity-50">
                             <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-blue-500 mt-0.5 shrink-0" viewBox="0 0 20 20" fill="currentColor">
                               <path fillRule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clipRule="evenodd" />
                             </svg>
@@ -876,8 +876,8 @@ export default function Home() {
                         )}
                         <div className="my-1 border-t border-slate-100" />
                         <button onClick={exportAllChats} disabled={exportingBulk}
-                          className="w-full flex items-start gap-2.5 px-4 py-2.5 text-left hover:bg-[#F2FAEC] transition-colors disabled:opacity-50">
-                          <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-purple-500 mt-0.5 shrink-0" viewBox="0 0 20 20" fill="currentColor">
+                          className="w-full flex items-start gap-2.5 px-4 py-2.5 text-left hover:bg-brand-soft transition-colors disabled:opacity-50">
+                          <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-brand mt-0.5 shrink-0" viewBox="0 0 20 20" fill="currentColor">
                             <path d="M7 3a1 1 0 000 2h6a1 1 0 100-2H7zM4 7a1 1 0 011-1h10a1 1 0 110 2H5a1 1 0 01-1-1zM2 11a2 2 0 012-2h12a2 2 0 012 2v4a2 2 0 01-2 2H4a2 2 0 01-2-2v-4z" />
                           </svg>
                           <div>
@@ -900,18 +900,18 @@ export default function Home() {
                   <path fillRule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clipRule="evenodd" />
                 </svg>
                 <input type="text" placeholder="Buscar por ID…" value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
-                  className="w-full pl-8 pr-3 py-2 text-sm rounded-lg bg-[#F2FAEC] border border-slate-200 text-slate-900 placeholder-slate-400 outline-none focus:ring-2 focus:ring-[#467173] focus:border-transparent transition" />
+                  className="w-full pl-8 pr-3 py-2 text-sm rounded-lg bg-brand-soft border border-slate-200 text-slate-900 placeholder-slate-400 outline-none focus:ring-2 focus:ring-brand focus:border-transparent transition" />
               </div>
 
               {/* Active date filter chip */}
               {selectedCalDate && (
                 <div className="flex items-center gap-2 mt-2">
-                  <div className="flex items-center gap-1.5 px-2.5 py-1 bg-[#F2FAEC] border border-[#D9EFB5] rounded-full">
-                    <svg className="w-3 h-3 text-[#467173]" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                  <div className="flex items-center gap-1.5 px-2.5 py-1 bg-brand-soft border border-brand-soft rounded-full">
+                    <svg className="w-3 h-3 text-brand-text" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                       <path fillRule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clipRule="evenodd" />
                     </svg>
-                    <span className="text-xs font-medium text-[#467173] capitalize">{formatDateShort(selectedCalDate)}</span>
-                    <button onClick={() => setSelectedCalDate(null)} className="w-3.5 h-3.5 flex items-center justify-center rounded-full hover:bg-emerald-200 text-[#467173] font-bold text-xs leading-none transition-colors">×</button>
+                    <span className="text-xs font-medium text-brand-text capitalize">{formatDateShort(selectedCalDate)}</span>
+                    <button onClick={() => setSelectedCalDate(null)} className="w-3.5 h-3.5 flex items-center justify-center rounded-full hover:bg-blue-200 text-brand-text font-bold text-xs leading-none transition-colors">×</button>
                   </div>
                 </div>
               )}
@@ -921,7 +921,7 @@ export default function Home() {
             <div className="flex-1 overflow-y-auto">
               {loadingUsers ? (
                 <div className="flex flex-col items-center justify-center py-16 gap-3 text-slate-400">
-                  <div className="w-5 h-5 border-2 border-[#467173] border-t-transparent rounded-full animate-spin" />
+                  <div className="w-5 h-5 border-2 border-brand border-t-transparent rounded-full animate-spin" />
                   <span className="text-xs">Cargando conversaciones…</span>
                 </div>
               ) : errorUsers ? (
@@ -932,7 +932,7 @@ export default function Home() {
                     </svg>
                   </div>
                   <p className="text-xs text-slate-500">{errorUsers}</p>
-                  <button onClick={() => window.location.reload()} className="text-xs text-[#467173] hover:underline font-medium">Reintentar</button>
+                  <button onClick={() => window.location.reload()} className="text-xs text-brand-text hover:underline font-medium">Reintentar</button>
                 </div>
               ) : chatListEntries.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-16 gap-2 text-slate-400">
@@ -958,7 +958,7 @@ export default function Home() {
           </div>
 
           {/* ── Col 3: Chat Detail (email-style) ── */}
-          <main className={`flex-1 flex flex-col overflow-hidden bg-[#F2FAEC] ${showDetailOnMobile ? "flex" : "hidden md:flex"}`}>
+          <main className={`flex-1 flex flex-col overflow-hidden bg-brand-soft ${showDetailOnMobile ? "flex" : "hidden md:flex"}`}>
             {selectedUser === null ? (
               <div className="flex flex-col items-center justify-center flex-1 gap-5 text-slate-400 px-8">
                 <div className="w-20 h-20 rounded-2xl bg-white border border-slate-200 shadow-sm flex items-center justify-center">
@@ -974,7 +974,7 @@ export default function Home() {
                   <div className="flex flex-wrap justify-center gap-2 max-w-sm">
                     {[...datesWithChats].sort((a, b) => b.localeCompare(a)).slice(0, 5).map(d => (
                       <button key={d} onClick={() => setSelectedCalDate(d)}
-                        className="text-xs px-3 py-1.5 bg-white border border-slate-200 rounded-full text-slate-600 hover:bg-[#D9EFB5] hover:border-[#D9EFB5] hover:text-[#467173] transition-colors capitalize">
+                        className="text-xs px-3 py-1.5 bg-white border border-slate-200 rounded-full text-slate-600 hover:bg-brand-soft hover:border-brand-soft hover:text-brand-text transition-colors capitalize">
                         {formatDateShort(d)}
                       </button>
                     ))}
@@ -994,7 +994,7 @@ export default function Home() {
                       </svg>
                     </button>
                     {/* Avatar */}
-                    <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-400 to-teal-500 text-white text-sm font-bold shrink-0 shadow-sm">
+                    <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-brand to-brand-deep text-white text-sm font-bold shrink-0 shadow-sm">
                       {String(selectedUser).slice(-2)}
                     </div>
                     {/* Meta */}
@@ -1019,7 +1019,7 @@ export default function Home() {
                           className={`flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium border rounded-lg transition-colors disabled:opacity-60
                             ${pauseStatus?.paused
                               ? "bg-slate-100 border-slate-400 text-slate-700 hover:bg-slate-200"
-                              : "bg-white border-slate-200 text-slate-500 hover:bg-[#F2FAEC]"}`}>
+                              : "bg-white border-slate-200 text-slate-500 hover:bg-brand-soft"}`}>
                           {pauseLoading ? (
                             <div className="w-3.5 h-3.5 border-2 border-current border-t-transparent rounded-full animate-spin" />
                           ) : pauseStatus?.paused ? (
@@ -1038,7 +1038,7 @@ export default function Home() {
                         <button
                           onClick={() => { navigator.clipboard.writeText(window.location.href); setLinkCopied(true); setTimeout(() => setLinkCopied(false), 2000); }}
                           className={`flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium border rounded-lg transition-colors
-                            ${linkCopied ? "bg-[#F2FAEC] border-[#D9EFB5] text-[#467173]" : "bg-white border-slate-200 text-slate-500 hover:bg-[#F2FAEC]"}`}>
+                            ${linkCopied ? "bg-brand-soft border-brand-soft text-brand-text" : "bg-white border-slate-200 text-slate-500 hover:bg-brand-soft"}`}>
                           {linkCopied
                             ? <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" /></svg>
                             : <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" viewBox="0 0 20 20" fill="currentColor"><path d="M12.586 4.586a2 2 0 112.828 2.828l-3 3a2 2 0 01-2.828 0 1 1 0 00-1.414 1.414 4 4 0 005.656 0l3-3a4 4 0 00-5.656-5.656l-1.5 1.5a1 1 0 101.414 1.414l1.5-1.5zm-5 5a2 2 0 012.828 0 1 1 0 101.414-1.414 4 4 0 00-5.656 0l-3 3a4 4 0 105.656 5.656l1.5-1.5a1 1 0 10-1.414-1.414l-1.5 1.5a2 2 0 11-2.828-2.828l3-3z" /></svg>
@@ -1046,14 +1046,14 @@ export default function Home() {
                           <span className="hidden sm:inline">{linkCopied ? "¡Copiado!" : "Enlace"}</span>
                         </button>
                         <button onClick={exportCurrentChat}
-                          className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium text-[#467173] bg-[#F2FAEC] border border-[#D9EFB5] rounded-lg hover:bg-[#c8e49a] transition-colors">
+                          className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium text-brand-text bg-brand-soft border border-brand-soft rounded-lg hover:bg-blue-200 transition-colors">
                           <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" viewBox="0 0 20 20" fill="currentColor">
                             <path fillRule="evenodd" d="M6 2a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V7.414A2 2 0 0015.414 6L12 2.586A2 2 0 0010.586 2H6zm5 6a1 1 0 10-2 0v3.586L7.707 10.293a1 1 0 10-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 11.586V8z" clipRule="evenodd" />
                           </svg>
                           <span className="hidden sm:inline">Exportar</span>
                         </button>
                         <button onClick={() => window.open(`/resumen?chat=${encodeURIComponent(selectedUser!)}&fecha=${encodeURIComponent(selectedFecha!)}`, "_blank")}
-                          className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium text-slate-600 bg-white border border-slate-200 rounded-lg hover:bg-[#F2FAEC] transition-colors">
+                          className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium text-slate-600 bg-white border border-slate-200 rounded-lg hover:bg-brand-soft transition-colors">
                           <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" viewBox="0 0 20 20" fill="currentColor">
                             <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z" />
                             <path fillRule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3zm-3 4a1 1 0 100 2h.01a1 1 0 100-2H7zm3 0a1 1 0 100 2h3a1 1 0 100-2h-3z" clipRule="evenodd" />
@@ -1068,7 +1068,7 @@ export default function Home() {
                 </div>
 
                 {newMessageNotice && (
-                  <div className="fixed top-20 right-4 z-50 max-w-xs bg-[#467173] text-white text-xs font-medium px-4 py-3 rounded-xl shadow-lg flex items-center gap-2">
+                  <div className="fixed top-20 right-4 z-50 max-w-xs bg-brand-deep text-white text-xs font-medium px-4 py-3 rounded-xl shadow-lg flex items-center gap-2">
                     <span className="w-2 h-2 rounded-full bg-white animate-pulse shrink-0" />
                     <span className="truncate">{newMessageNotice}</span>
                   </div>
@@ -1084,7 +1084,7 @@ export default function Home() {
                       <strong>Tú estás a cargo</strong> de esta conversación{pauseStatus.pausado_en ? ` desde ${formatTimestamp(pauseStatus.pausado_en)}` : ""}. La IA no responderá hasta que la devuelvas.
                     </span>
                     <button onClick={togglePause} disabled={pauseLoading}
-                      className="ml-auto text-xs font-semibold text-[#467173] hover:text-[#355759] underline underline-offset-2 disabled:opacity-50 whitespace-nowrap">
+                      className="ml-auto text-xs font-semibold text-brand-text hover:text-brand-dark underline underline-offset-2 disabled:opacity-50 whitespace-nowrap">
                       Devolver al bot
                     </button>
                   </div>
@@ -1101,7 +1101,7 @@ export default function Home() {
                     <div ref={chatTopRef} />
                     {loadingChat ? (
                       <div className="flex flex-col items-center justify-center py-20 gap-3 text-slate-400">
-                        <div className="w-6 h-6 border-2 border-[#467173] border-t-transparent rounded-full animate-spin" />
+                        <div className="w-6 h-6 border-2 border-brand border-t-transparent rounded-full animate-spin" />
                         <span className="text-xs">Cargando mensajes…</span>
                       </div>
                     ) : errorChat ? (
@@ -1113,7 +1113,7 @@ export default function Home() {
                         </div>
                         <p className="text-sm text-slate-500">{errorChat}</p>
                         <button onClick={() => selectedUser && selectedFecha && loadChat(selectedUser, selectedFecha)}
-                          className="text-xs text-[#467173] hover:underline font-medium">Reintentar</button>
+                          className="text-xs text-brand-text hover:underline font-medium">Reintentar</button>
                       </div>
                     ) : messages.length === 0 ? (
                       <div className="flex items-center justify-center py-20 text-slate-400 text-sm">Sin mensajes en esta fecha</div>
@@ -1129,7 +1129,7 @@ export default function Home() {
                           <div key={i} className={`flex items-end gap-2.5 ${isUser ? "justify-end" : "justify-start"}`}>
                             {!isUser && (
                               <div className={`w-7 h-7 rounded-full text-white text-[10px] font-bold flex items-center justify-center shrink-0 mb-0.5 shadow-sm ${
-                                isHuman ? "bg-slate-700" : "bg-gradient-to-br from-emerald-400 to-teal-500"
+                                isHuman ? "bg-slate-700" : "bg-gradient-to-br from-brand to-brand-deep"
                               }`}>
                                 {isHuman ? (
                                   <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" viewBox="0 0 20 20" fill="currentColor">
@@ -1143,7 +1143,7 @@ export default function Home() {
                             <div className={`max-w-[80%] md:max-w-[70%] flex flex-col gap-1 ${isUser ? "items-end" : "items-start"}`}>
                               {(isHuman || isBot) && (
                                 <span className={`text-[10px] font-semibold uppercase tracking-wider px-1 ${
-                                  isHuman ? "text-slate-600" : "text-emerald-600"
+                                  isHuman ? "text-slate-600" : "text-brand-text"
                                 }`}>
                                   {roleLabel(msg.role)}
                                 </span>
@@ -1154,17 +1154,17 @@ export default function Home() {
                                     prose-p:text-slate-700 prose-p:leading-relaxed prose-p:my-1.5
                                     prose-headings:font-semibold prose-headings:text-slate-800
                                     prose-strong:text-slate-800
-                                    prose-a:text-[#467173] prose-a:no-underline hover:prose-a:underline
+                                    prose-a:text-brand-text prose-a:no-underline hover:prose-a:underline
                                     prose-ul:my-2 prose-ol:my-2 prose-li:my-0.5
-                                    prose-code:text-[#467173] prose-code:bg-[#F2FAEC] prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-code:text-xs prose-code:before:content-none prose-code:after:content-none
+                                    prose-code:text-brand-text prose-code:bg-brand-soft prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-code:text-xs prose-code:before:content-none prose-code:after:content-none
                                     prose-pre:bg-slate-900 prose-pre:text-slate-100 prose-pre:rounded-xl prose-pre:text-xs
-                                    prose-blockquote:border-l-4 prose-blockquote:border-[#a8d08d] prose-blockquote:text-slate-500"
+                                    prose-blockquote:border-l-4 prose-blockquote:border-blue-300 prose-blockquote:text-slate-500"
                                   dangerouslySetInnerHTML={{ __html: botHtml }}
                                 />
                               ) : (
                                 <div className={`px-4 py-3 rounded-2xl text-sm leading-relaxed whitespace-pre-wrap ${
                                   isUser
-                                    ? "bg-[#467173] text-white rounded-br-sm shadow-sm"
+                                    ? "bg-brand-deep text-white rounded-br-sm shadow-sm"
                                     : isHuman
                                     ? "bg-slate-700 text-white rounded-bl-sm shadow-sm"
                                     : "bg-white border border-slate-200 text-slate-800 rounded-bl-sm shadow-sm"
@@ -1179,7 +1179,7 @@ export default function Home() {
                               )}
                             </div>
                             {isUser && (
-                              <div className="w-7 h-7 rounded-full bg-[#467173] text-white text-[10px] font-bold flex items-center justify-center shrink-0 mb-0.5">U</div>
+                              <div className="w-7 h-7 rounded-full bg-brand-deep text-white text-[10px] font-bold flex items-center justify-center shrink-0 mb-0.5">U</div>
                             )}
                           </div>
                         );
@@ -1198,7 +1198,7 @@ export default function Home() {
                         sendHumanMessage();
                       }}
                     >
-                      <div className="flex items-center gap-2 px-4 py-1.5 rounded-full bg-white border border-slate-300 focus-within:ring-2 focus-within:ring-[#467173] focus-within:border-transparent transition">
+                      <div className="flex items-center gap-2 px-4 py-1.5 rounded-full bg-white border border-slate-300 focus-within:ring-2 focus-within:ring-brand focus-within:border-transparent transition">
                         <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 shrink-0 select-none">
                           Humano
                         </span>
@@ -1221,7 +1221,7 @@ export default function Home() {
                         <button
                           type="submit"
                           disabled={humanSending || !humanInput.trim()}
-                          className="h-8 w-8 rounded-full flex items-center justify-center text-white bg-[#467173] hover:bg-[#355759] disabled:bg-slate-300 disabled:cursor-not-allowed transition-all active:scale-90 shrink-0"
+                          className="h-8 w-8 rounded-full flex items-center justify-center text-white bg-brand-deep hover:bg-brand-dark disabled:bg-slate-300 disabled:cursor-not-allowed transition-all active:scale-90 shrink-0"
                         >
                           {humanSending ? (
                             <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
@@ -1246,7 +1246,7 @@ export default function Home() {
 
       {/* ══════════════════════ TAB: CHAT SIMULATOR ══════════════════════ */}
       {currentTab === "chat" && (
-        <div className="flex flex-1 flex-col bg-[#F2FAEC] overflow-hidden">
+        <div className="flex flex-1 flex-col bg-brand-soft overflow-hidden">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between px-4 md:px-6 py-4 bg-white border-b border-slate-200 shrink-0 gap-3">
             <div>
               <h2 className="text-lg font-semibold text-slate-800">Simulador de Chat</h2>
@@ -1254,7 +1254,7 @@ export default function Home() {
             </div>
             <button
               onClick={() => { setSimMessages([{ role: "bot", text: "¡Hola! Soy el simulador de Dr. Recetas. ¿En qué te puedo ayudar hoy?" }]); localStorage.removeItem("dr-recetas-sim-id"); setSimInput(""); }}
-              className="flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-slate-600 bg-white border border-slate-200 rounded-xl hover:bg-[#F2FAEC] transition-colors shadow-sm w-full sm:w-auto shrink-0">
+              className="flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-slate-600 bg-white border border-slate-200 rounded-xl hover:bg-brand-soft transition-colors shadow-sm w-full sm:w-auto shrink-0">
               <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-slate-400" viewBox="0 0 20 20" fill="currentColor">
                 <path fillRule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clipRule="evenodd" />
               </svg>
@@ -1271,10 +1271,10 @@ export default function Home() {
                     <div className={`max-w-[85%] md:max-w-[75%] flex flex-col gap-1 ${isUser ? "items-end" : "items-start"}`}>
                       <span className="text-xs text-slate-400 px-1">{isUser ? "Tú" : "Bot (Simulador)"}</span>
                       {botHtml ? (
-                        <div className="prose prose-sm prose-slate max-w-none px-4 py-3 rounded-2xl rounded-bl-sm bg-white border border-slate-200 shadow-sm prose-p:text-slate-700 prose-p:leading-relaxed prose-p:my-1.5 prose-headings:font-semibold prose-headings:text-slate-800 prose-strong:text-slate-800 prose-a:text-[#467173] prose-a:no-underline hover:prose-a:underline prose-ul:my-2 prose-ol:my-2 prose-li:my-0.5 prose-code:text-[#467173] prose-code:bg-[#F2FAEC] prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-code:text-xs prose-code:before:content-none prose-code:after:content-none"
+                        <div className="prose prose-sm prose-slate max-w-none px-4 py-3 rounded-2xl rounded-bl-sm bg-white border border-slate-200 shadow-sm prose-p:text-slate-700 prose-p:leading-relaxed prose-p:my-1.5 prose-headings:font-semibold prose-headings:text-slate-800 prose-strong:text-slate-800 prose-a:text-brand-text prose-a:no-underline hover:prose-a:underline prose-ul:my-2 prose-ol:my-2 prose-li:my-0.5 prose-code:text-brand-text prose-code:bg-brand-soft prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-code:text-xs prose-code:before:content-none prose-code:after:content-none"
                           dangerouslySetInnerHTML={{ __html: botHtml }} />
                       ) : (
-                        <div className={`px-4 py-2.5 rounded-2xl text-sm leading-relaxed whitespace-pre-wrap ${isUser ? "bg-[#467173] text-white rounded-br-sm" : "bg-white border border-slate-200 text-slate-800 rounded-bl-sm shadow-sm"}`}>{msg.text}</div>
+                        <div className={`px-4 py-2.5 rounded-2xl text-sm leading-relaxed whitespace-pre-wrap ${isUser ? "bg-brand-deep text-white rounded-br-sm" : "bg-white border border-slate-200 text-slate-800 rounded-bl-sm shadow-sm"}`}>{msg.text}</div>
                       )}
                     </div>
                   </div>
@@ -1323,10 +1323,10 @@ export default function Home() {
               <textarea value={simInput} onChange={e => setSimInput(e.target.value)}
                 onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); e.currentTarget.form?.dispatchEvent(new Event("submit", { cancelable: true, bubbles: true })); } }}
                 disabled={simIsLoading} placeholder="Escribe un mensaje..."
-                className="flex-1 max-h-32 min-h-[44px] resize-none overflow-y-auto rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-base md:text-sm text-slate-900 focus:border-[#467173] focus:outline-none focus:ring-1 focus:ring-[#467173] outline-none disabled:bg-[#F2FAEC] disabled:text-slate-400"
+                className="flex-1 max-h-32 min-h-[44px] resize-none overflow-y-auto rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-base md:text-sm text-slate-900 focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand outline-none disabled:bg-brand-soft disabled:text-slate-400"
                 rows={1} />
               <button type="submit" disabled={!simInput.trim() || simIsLoading}
-                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#467173] text-white transition-colors hover:bg-[#467173] disabled:opacity-50">
+                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-brand-deep text-white transition-colors hover:bg-brand-deep disabled:opacity-50">
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                   <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" />
                 </svg>
@@ -1338,7 +1338,7 @@ export default function Home() {
 
       {/* ══════════════════════ TAB: APRENDIZAJE ══════════════════════ */}
       {currentTab === "aprendizaje" && (
-        <div className="flex flex-1 flex-col bg-[#F2FAEC] overflow-hidden relative">
+        <div className="flex flex-1 flex-col bg-brand-soft overflow-hidden relative">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between px-4 md:px-6 py-4 bg-white border-b border-slate-200 shrink-0 gap-3">
             <div>
               <h2 className="text-lg font-semibold text-slate-800">Base de Conocimiento</h2>
@@ -1355,7 +1355,7 @@ export default function Home() {
           <div className="flex-1 overflow-y-auto w-full max-w-7xl mx-auto p-4 md:p-6">
             <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden overflow-x-auto">
               <table className="w-full text-left border-collapse text-sm min-w-[600px]">
-                <thead className="bg-[#F2FAEC] border-b border-slate-200 text-slate-500">
+                <thead className="bg-brand-soft border-b border-slate-200 text-slate-500">
                   <tr>
                     <th className="px-5 py-3 font-medium w-16 text-center">ID</th>
                     <th className="px-5 py-3 font-medium w-1/3">Pregunta</th>
@@ -1369,7 +1369,7 @@ export default function Home() {
                     <tr><td colSpan={3} className="px-5 py-8 text-center text-slate-400">No hay elementos aún.</td></tr>
                   ) : (
                     knowledgeList.map(k => (
-                      <tr key={k.id} className="hover:bg-[#F2FAEC] transition-colors">
+                      <tr key={k.id} className="hover:bg-brand-soft transition-colors">
                         <td className="px-5 py-4 text-center text-slate-400 font-medium">#{k.id}</td>
                         <td className="px-5 py-4 text-slate-800 font-medium align-top leading-relaxed">{k.pregunta}</td>
                         <td className="px-5 py-4 text-slate-600 align-top leading-relaxed">{k.respuesta}</td>
@@ -1384,7 +1384,7 @@ export default function Home() {
           {showKnowledgeModal && (
             <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
               <div className="bg-white rounded-2xl shadow-xl w-full max-w-2xl overflow-hidden flex flex-col">
-                <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-[#F2FAEC]/50">
+                <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-brand-soft/50">
                   <h3 className="text-base font-semibold text-slate-900">Añadir Nuevo Conocimiento</h3>
                   <button onClick={() => setShowKnowledgeModal(false)} className="text-slate-400 hover:text-slate-600 transition-colors">
                     <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" viewBox="0 0 20 20" fill="currentColor">
@@ -1407,7 +1407,7 @@ export default function Home() {
                   </div>
                   <div className="flex flex-col sm:flex-row items-center justify-end gap-3 border-t border-slate-100 pt-5">
                     <button type="button" onClick={() => setShowKnowledgeModal(false)}
-                      className="w-full sm:w-auto px-5 py-2.5 text-sm font-medium text-slate-600 bg-white border border-slate-200 rounded-xl hover:bg-[#F2FAEC] transition-colors">
+                      className="w-full sm:w-auto px-5 py-2.5 text-sm font-medium text-slate-600 bg-white border border-slate-200 rounded-xl hover:bg-brand-soft transition-colors">
                       Cancelar
                     </button>
                     <button type="submit" disabled={savingKnowledge}
@@ -1426,7 +1426,7 @@ export default function Home() {
       {/* ── Footer ── */}
       <footer className="shrink-0 bg-white border-t border-slate-200 py-2.5">
         <p className="text-center text-[11px] text-slate-400">
-          <span className="font-semibold text-[#467173]">Tu licencia</span>
+          <span className="font-semibold text-brand-text">Tu licencia</span>
           <span className="mx-1.5 text-slate-300">·</span>
           Agente IA · Panel CRM
           <span className="mx-2 text-slate-300">|</span>
