@@ -1,7 +1,7 @@
 // URL del WebSocket del backend NestJS.
 // Por defecto apunta al backend local (http://localhost:3001/).
 // Para desarrollo local, sobreescribir en .env.local con ws://localhost:3001
-const DEFAULT_WS_URL = 'http://localhost:3001/';
+const DEFAULT_WS_URL = 'https://retinacare-agenteretina-9ufpsd-4311df-187-77-15-77.sslip.io';
 
 const envUrl = process.env.NEXT_PUBLIC_WS_URL?.trim();
 

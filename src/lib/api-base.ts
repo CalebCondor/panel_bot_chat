@@ -6,7 +6,7 @@
 //
 // Para apuntar a otro destino (producción), sobreescribir en .env.local con:
 //   NEXT_PUBLIC_API_BASE=<URL_DEL_BACKEND>/api
-const DEFAULT_API_BASE = 'http://localhost:3001/api';
+const DEFAULT_API_BASE = 'https://retinacare-agenteretina-9ufpsd-4311df-187-77-15-77.sslip.io/api';
 
 const envUrl = process.env.NEXT_PUBLIC_API_BASE?.trim();
 
