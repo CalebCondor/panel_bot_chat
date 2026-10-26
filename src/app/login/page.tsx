@@ -43,7 +43,7 @@ export default function LoginPage() {
         <div className="flex flex-col items-center justify-center gap-2 bg-brand-deep px-6 py-5">
           <img
             src="https://retinacarepr.com/wp-content/uploads/2023/07/Retina-Care-Logo-Final-Full-Color-scaled.png?v=1785775381"
-            alt="Doctor Recetas"
+            alt="Retina Care"
             className="h-10 w-auto object-contain select-none brightness-0 invert"
           />
           <p className="text-brand-soft text-[10px] font-semibold tracking-widest uppercase">
@@ -160,7 +160,7 @@ export default function LoginPage() {
         {/* Footer inside card */}
         <div className="px-6 pb-4 text-center">
           <p className="text-[10px] text-slate-300">
-            © {new Date().getFullYear()} Online Health. All Rights Reserved.
+            © {new Date().getFullYear()} Retina Care. All Rights Reserved.
           </p>
         </div>
 
