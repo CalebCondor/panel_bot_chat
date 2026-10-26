@@ -42,7 +42,7 @@ export default function LoginPage() {
         {/* Top brand band */}
         <div className="flex flex-col items-center justify-center gap-2 bg-[#467173] px-6 py-5">
           <img
-            src="https://tulicenciapr.com/assets/images/theme/logo.png?v=1785775381"
+            src="https://retinacarepr.com/wp-content/uploads/2023/07/Retina-Care-Logo-Final-Full-Color-scaled.png?v=1785775381"
             alt="Doctor Recetas"
             className="h-10 w-auto object-contain select-none brightness-0 invert"
           />

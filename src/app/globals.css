@@ -8,6 +8,20 @@
 @theme inline {
   --font-sans: var(--font-sans);
   --font-heading: var(--font-sans);
+
+  /* Escala "blue" de la marca: #008eba (Retina Care).
+     Sobrescribe el blue-* por defecto de Tailwind para que todos los
+     "distintos tipos de azul" del panel sean degradados de este color. */
+  --color-blue-50: #edf7fa;
+  --color-blue-100: #d9eef5;
+  --color-blue-200: #b8dfec;
+  --color-blue-300: #94d0e2;
+  --color-blue-400: #66bbd6;
+  --color-blue-500: #008eba;
+  --color-blue-600: #027a9f;
+  --color-blue-700: #036888;
+  --color-blue-800: #055670;
+  --color-blue-900: #074558;
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);

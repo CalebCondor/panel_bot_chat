@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import DOMPurify from "dompurify";
 import { marked } from "marked";
 import { WS_URL } from "@/lib/ws-url";
+import { API_BASE } from "@/lib/api-base";
+import { formatFecha, formatFechaShort, formatHoraPR, formatTimestamp } from "@/lib/date";
 
 // ─── Mini Calendar ────────────────────────────────────────────────────────────
 const MONTHS_ES = [
@@ -72,8 +74,6 @@ function MiniCalendar({
   );
 }
 
-const API_BASE = "https://tulicencia.apidoctorrecetas.com/api";
-
 // ─── Types ────────────────────────────────────────────────────────────────────
 type ContentBlock = { type: string; text?: string; [key: string]: unknown };
 type KnowledgeEntry = { id: number; pregunta: string; respuesta: string; updated_at?: string };
@@ -116,25 +116,15 @@ function roleIsHuman(role: string): boolean { return role === "human"; }
 function roleIsBot(role: string): boolean { return role === "ai" || role === "assistant"; }
 
 function formatDate(dateStr: string): string {
-  const [year, month, day] = dateStr.split("-").map(Number);
-  return new Date(year, month - 1, day).toLocaleDateString("es-MX", { weekday: "long", day: "numeric", month: "long" });
+  return formatFecha(dateStr);
 }
 
 function formatDateShort(dateStr: string): string {
-  const [year, month, day] = dateStr.split("-").map(Number);
-  return new Date(year, month - 1, day).toLocaleDateString("es-MX", { day: "numeric", month: "short" });
+  return formatFechaShort(dateStr);
 }
 
 function formatTimeShort(iso?: string): string {
-  if (!iso) return "";
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return "";
-  return d.toLocaleTimeString("es-PR", {
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: true,
-    timeZone: "America/Puerto_Rico",
-  });
+  return formatHoraPR(iso);
 }
 
 function downloadFile(filename: string, content: string) {
@@ -549,7 +539,7 @@ export default function Home() {
     for (const msg of messages) {
       const text = toPlainText(extractText(msg.content).trim());
       if (!text) continue;
-      const time = msg.created_at ? ` [${new Date(msg.created_at).toLocaleString("es-MX", { dateStyle: "short", timeStyle: "short" })}]` : "";
+      const time = msg.created_at ? ` [${formatTimestamp(msg.created_at)}]` : "";
       lines.push(`▸ ${roleLabel(msg.role)}${time}`, text, ``);
     }
     downloadFile(`chat_${selectedUser}_${selectedFecha}.txt`, lines.join("\n"));
@@ -583,7 +573,7 @@ export default function Home() {
         for (const msg of msgs) {
           const text = toPlainText(extractText(msg.content).trim());
           if (!text) continue;
-          const time = msg.created_at ? ` [${new Date(msg.created_at).toLocaleString("es-MX", { timeStyle: "short" })}]` : "";
+          const time = msg.created_at ? ` [${formatTimestamp(msg.created_at, { timeStyle: "short" })}]` : "";
           lines.push(`▸ ${roleLabel(msg.role)}${time}`, text, ``);
         }
       } catch { /* skip */ }
@@ -617,7 +607,7 @@ export default function Home() {
         for (const msg of data.messages) {
           const text = toPlainText(extractText(msg.content).trim());
           if (!text) continue;
-          const time = msg.created_at ? ` [${new Date(msg.created_at).toLocaleString("es-MX", { dateStyle: "short", timeStyle: "short" })}]` : "";
+          const time = msg.created_at ? ` [${formatTimestamp(msg.created_at)}]` : "";
           lines.push(`▸ ${roleLabel(msg.role)}${time}`, text, ``);
         }
       } catch { /* skip */ }
@@ -1091,7 +1081,7 @@ export default function Home() {
                       <path d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" />
                     </svg>
                     <span className="text-xs font-medium">
-                      <strong>Tú estás a cargo</strong> de esta conversación{pauseStatus.pausado_en ? ` desde ${new Date(pauseStatus.pausado_en).toLocaleString("es-MX", { dateStyle: "short", timeStyle: "short" })}` : ""}. La IA no responderá hasta que la devuelvas.
+                      <strong>Tú estás a cargo</strong> de esta conversación{pauseStatus.pausado_en ? ` desde ${formatTimestamp(pauseStatus.pausado_en)}` : ""}. La IA no responderá hasta que la devuelvas.
                     </span>
                     <button onClick={togglePause} disabled={pauseLoading}
                       className="ml-auto text-xs font-semibold text-[#467173] hover:text-[#355759] underline underline-offset-2 disabled:opacity-50 whitespace-nowrap">
@@ -1184,7 +1174,7 @@ export default function Home() {
                               )}
                               {msg.created_at && (
                                 <span className="text-[10px] text-slate-400 px-1">
-                                  {new Date(msg.created_at).toLocaleString("es-MX", { dateStyle: "short", timeStyle: "short" })}
+                                  {formatTimestamp(msg.created_at)}
                                 </span>
                               )}
                             </div>

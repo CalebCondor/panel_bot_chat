@@ -3,8 +3,8 @@
 import { useEffect, useState } from "react";
 import DOMPurify from "dompurify";
 import { marked } from "marked";
-
-const API_BASE = "/api/proxy";
+import { API_BASE } from "@/lib/api-base";
+import { formatFecha, formatHora } from "@/lib/date";
 
 type ContentBlock = { type: string; text?: string; [key: string]: unknown };
 
@@ -52,13 +52,7 @@ function roleIsUser(role: string): boolean {
 }
 
 function formatDate(dateStr: string): string {
-  const [year, month, day] = dateStr.split("-").map(Number);
-  return new Date(year, month - 1, day).toLocaleDateString("es-MX", {
-    weekday: "long",
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-  });
+  return formatFecha(dateStr, true);
 }
 
 function getUrlParams() {
@@ -109,12 +103,7 @@ export default function ResumenPage() {
     messages.forEach((m, i) => {
       const text = toPlainText(extractText(m.content).trim());
       if (!text) return;
-      const ts = m.created_at
-        ? new Date(m.created_at as string).toLocaleTimeString("es-MX", {
-            hour: "2-digit",
-            minute: "2-digit",
-          })
-        : null;
+      const ts = m.created_at ? formatHora(m.created_at) : null;
       lines.push(`[${roleLabel(m.role)}${ts ? ` · ${ts}` : ""}]`);
       lines.push(text);
       if (i < messages.length - 1) lines.push("");
@@ -216,12 +205,7 @@ export default function ResumenPage() {
               const botHtml = !isUser
                 ? DOMPurify.sanitize(marked.parse(text) as string)
                 : null;
-              const ts = msg.created_at
-                ? new Date(msg.created_at as string).toLocaleTimeString("es-MX", {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })
-                : null;
+              const ts = msg.created_at ? formatHora(msg.created_at) : null;
 
               return (
                 <div
