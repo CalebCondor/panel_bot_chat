@@ -13,8 +13,8 @@ const poppins = Poppins({
 });
 
 export const metadata: Metadata = {
-  title: "Tu Licencia — Panel",
-  description: "Panel de conversaciones del agente Islamed",
+  title: "Retina Care — Panel",
+  description: "Panel de conversaciones del agente de Retina Care",
 };
 
 export default function RootLayout({
